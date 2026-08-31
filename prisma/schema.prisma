@@ -1,0 +1,219 @@
+// Appointment Scheduler — white-label booking platform
+// One Business row per deployment. Everything else belongs to that business.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Business — the single tenant of this deployment. Owns branding, contact
+// info and booking rules. Everything a buyer needs to "re-skin" the app
+// lives here and is editable from /admin/settings, not in code.
+// ---------------------------------------------------------------------------
+model Business {
+  id String @id @default(cuid())
+
+  name  String
+  slug  String @unique
+  logoUrl String?
+  faviconUrl String?
+
+  // Brand kit — drives CSS variables at runtime (see lib/theme.ts)
+  primaryColor String @default("#4f46e5")
+  accentColor  String @default("#0ea5e9")
+  fontFamily   String @default("inter")
+  themeMode    String @default("light") // light | dark | auto
+
+  // Public booking page copy
+  heroHeadline    String?
+  heroSubheadline String?
+  aboutText       String?
+
+  // Contact / footer
+  contactEmail String?
+  contactPhone String?
+  address      String?
+  website      String?
+  instagramUrl String?
+  facebookUrl  String?
+
+  timezone String @default("America/New_York")
+  currency String @default("USD")
+
+  // Booking rules
+  bookingSlotIntervalMinutes Int     @default(30)
+  bookingBufferMinutes       Int     @default(0)
+  minNoticeMinutes           Int     @default(120)
+  maxAdvanceDays             Int     @default(60)
+  requirePhone                Boolean @default(true)
+  cancellationWindowHours     Int     @default(24)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(OWNER)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  staff Staff?
+}
+
+model Staff {
+  id     String  @id @default(cuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name      String
+  email     String?
+  phone     String?
+  bio       String?
+  avatarUrl String?
+  color     String  @default("#4f46e5")
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services       ServiceStaff[]
+  availabilities Availability[]
+  timeOffs       TimeOff[]
+  bookings       Booking[]
+
+  @@index([active])
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  durationMinutes Int
+  price           Decimal? @db.Decimal(10, 2)
+  color           String   @default("#4f46e5")
+  active          Boolean  @default(true)
+  sortOrder       Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  staff    ServiceStaff[]
+  bookings Booking[]
+
+  @@index([active])
+}
+
+// Which staff members can perform which services (many-to-many)
+model ServiceStaff {
+  serviceId String
+  staffId   String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staff     Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, staffId])
+  @@index([staffId])
+}
+
+// Recurring weekly working hours per staff member, in business-local time.
+model Availability {
+  id          String @id @default(cuid())
+  staffId     String
+  staff       Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int // 0 = Sunday .. 6 = Saturday
+  startMinute Int // minutes from midnight, business-local time
+  endMinute   Int
+
+  @@index([staffId, dayOfWeek])
+}
+
+// One-off overrides: a staff member's day off, a business-wide holiday,
+// or shortened hours on a specific date.
+model TimeOff {
+  id          String    @id @default(cuid())
+  staffId     String? // null = applies business-wide (e.g. a holiday)
+  staff       Staff?    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date        DateTime  @db.Date
+  allDay      Boolean   @default(true)
+  startMinute Int?
+  endMinute   Int?
+  reason      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([staffId, date])
+  @@index([date])
+}
+
+model Customer {
+  id    String  @id @default(cuid())
+  name  String
+  email String
+  phone String?
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@unique([email])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Booking {
+  id String @id @default(cuid())
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+  staffId   String
+  staff     Staff   @relation(fields: [staffId], references: [id])
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  startsAt DateTime // stored in UTC
+  endsAt   DateTime
+
+  status BookingStatus @default(CONFIRMED)
+
+  notes         String? // internal, staff-only
+  customerNotes String? // submitted by the customer at booking time
+
+  manageToken String @unique @default(cuid()) // lets a customer manage their booking without an account
+
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  reminderSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([staffId, startsAt])
+  @@index([startsAt])
+  @@index([status])
+  @@index([customerId])
+}
