@@ -67,19 +67,28 @@ This is the repeatable process for selling/deploying this to a new business.
    `.env.example` for the full list. At minimum: `DATABASE_URL`,
    `DIRECT_URL`, `SESSION_SECRET`, `NEXT_PUBLIC_APP_URL` (your Vercel URL or
    custom domain), and `CRON_SECRET`.
-3. Deploy. The build runs `prisma generate` automatically
-   (`package.json` → `build` script).
+3. Deploy. The build runs `prisma generate && prisma migrate deploy`
+   automatically (`package.json` → `build` script) — tables and the
+   anti-double-booking constraint are created on every deploy with no
+   manual migration step.
 
-### 3. Run migrations and seed the first login
+### 3. Seed the first login
 
-Run these once, from your machine, pointed at the production database
-(set `DATABASE_URL`/`DIRECT_URL` in your local `.env` to the production
-values temporarily, or use `vercel env pull`):
+The one thing that still has to run from your own machine once per client,
+because the app has no database rows at all until this runs (the schema
+exists after step 2, but no `Business`/`User` row yet). Point your local
+`.env` at the production `DATABASE_URL`/`DIRECT_URL` (or `vercel env pull`),
+then:
 
 ```bash
-npm run db:migrate
+npm install
 SEED_OWNER_EMAIL="the-client@theirbusiness.com" SEED_OWNER_PASSWORD="a-strong-temp-password" npm run db:seed
 ```
+
+This creates a demo `Business` row (placeholder name/services/staff) and the
+client's first admin login. The client replaces the placeholder content with
+their real business from the dashboard in step 5 below — it's a starting
+template, not something you need to hand-edit with their real info first.
 
 Tell the client to log in and change their password... there's no
 self-service password change yet (see **Known limitations** below) — for now,
