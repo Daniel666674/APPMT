@@ -19,12 +19,12 @@ import { Button } from "@/components/ui/button";
 import { logout } from "@/app/admin/actions";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/appointments", label: "Appointments", icon: CalendarDays },
-  { href: "/admin/services", label: "Services", icon: Scissors },
-  { href: "/admin/staff", label: "Staff", icon: UserSquare2 },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin", label: "Inicio", icon: LayoutDashboard, exact: true },
+  { href: "/admin/appointments", label: "Citas", icon: CalendarDays },
+  { href: "/admin/services", label: "Servicios", icon: Scissors },
+  { href: "/admin/staff", label: "Equipo", icon: UserSquare2 },
+  { href: "/admin/customers", label: "Clientes", icon: Users },
+  { href: "/admin/settings", label: "Configuración", icon: Settings },
 ];
 
 export function AdminShell({
@@ -77,10 +77,10 @@ export function AdminShell({
         </div>
         {nav}
         <div className="mt-auto space-y-2 px-4 pt-6">
-          <p className="truncate text-xs text-muted-foreground">Signed in as {userName}</p>
+          <p className="truncate text-xs text-muted-foreground">Sesión de {userName}</p>
           <form action={logout}>
             <Button type="submit" variant="outline" size="sm" className="w-full">
-              <LogOut className="h-3.5 w-3.5" /> Sign out
+              <LogOut className="h-3.5 w-3.5" /> Cerrar sesión
             </Button>
           </form>
         </div>
@@ -92,7 +92,7 @@ export function AdminShell({
           <aside className="relative z-50 flex w-64 flex-col bg-card py-6">
             <div className="mb-6 flex items-center justify-between px-4">
               <span className="truncate text-lg font-bold text-brand">{businessName}</span>
-              <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
+              <button onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -100,7 +100,7 @@ export function AdminShell({
             <div className="mt-auto space-y-2 px-4 pt-6">
               <form action={logout}>
                 <Button type="submit" variant="outline" size="sm" className="w-full">
-                  <LogOut className="h-3.5 w-3.5" /> Sign out
+                  <LogOut className="h-3.5 w-3.5" /> Cerrar sesión
                 </Button>
               </form>
             </div>
@@ -111,7 +111,7 @@ export function AdminShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
           <span className="font-bold text-brand">{businessName}</span>
-          <button onClick={() => setMobileOpen(true)} aria-label="Open menu">
+          <button onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
             <Menu className="h-5 w-5" />
           </button>
         </header>

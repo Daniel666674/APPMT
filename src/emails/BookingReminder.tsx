@@ -15,21 +15,21 @@ export function BookingReminderEmail(props: {
   const { businessName, logoUrl, primaryColor, customerName, serviceName, staffName, dateLabel, timeLabel, manageUrl } = props;
   return (
     <EmailLayout
-      previewText={`Reminder: your appointment with ${businessName} is coming up`}
+      previewText={`Recordatorio: se acerca tu cita en ${businessName}`}
       businessName={businessName}
       logoUrl={logoUrl}
       primaryColor={primaryColor}
-      title="See you soon!"
+      title="¡Nos vemos pronto!"
     >
-      <Text style={{ fontSize: 14, color: "#3f3f46" }}>Hi {customerName}, this is a reminder about your upcoming appointment.</Text>
+      <Text style={{ fontSize: 14, color: "#3f3f46" }}>Hola {customerName}, te recordamos tu próxima cita.</Text>
       <Section style={{ backgroundColor: "#f4f4f5", borderRadius: 8, padding: "16px 20px", margin: "16px 0" }}>
-        <DetailRow label="Service" value={serviceName} />
-        <DetailRow label="With" value={staffName} />
-        <DetailRow label="Date" value={dateLabel} />
-        <DetailRow label="Time" value={timeLabel} />
+        <DetailRow label="Servicio" value={serviceName} />
+        <DetailRow label="Con" value={staffName} />
+        <DetailRow label="Fecha" value={dateLabel} />
+        <DetailRow label="Hora" value={timeLabel} />
       </Section>
       <Button href={manageUrl} style={{ backgroundColor: primaryColor, color: "#ffffff", padding: "12px 20px", borderRadius: 8, fontSize: 14, fontWeight: 600 }}>
-        Manage your appointment
+        Gestionar mi cita
       </Button>
     </EmailLayout>
   );

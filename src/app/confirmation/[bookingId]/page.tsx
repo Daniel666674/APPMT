@@ -30,23 +30,23 @@ export default async function ConfirmationPage({ params }: { params: Promise<{ b
               <CalendarCheck className="h-7 w-7" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">You&apos;re booked!</h1>
+              <h1 className="text-xl font-bold">¡Tu cita quedó reservada!</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                A confirmation email is on its way to {booking.customer.email}.
+                Te enviamos la confirmación a {booking.customer.email}.
               </p>
             </div>
             <div className="w-full space-y-1 rounded-lg bg-secondary p-4 text-left text-sm">
-              <Row label="Service" value={booking.service.name} />
-              <Row label="With" value={booking.staff.name} />
-              <Row label="Date" value={formatBusinessDate(booking.startsAt, business.timezone)} />
-              <Row label="Time" value={formatBusinessTime(booking.startsAt, business.timezone)} />
+              <Row label="Servicio" value={booking.service.name} />
+              <Row label="Con" value={booking.staff.name} />
+              <Row label="Fecha" value={formatBusinessDate(booking.startsAt, business.timezone)} />
+              <Row label="Hora" value={formatBusinessTime(booking.startsAt, business.timezone)} />
             </div>
             <div className="flex w-full flex-col gap-2 pt-2">
               <Button asChild variant="outline">
-                <Link href={`/manage/${booking.manageToken}`}>Manage this appointment</Link>
+                <Link href={`/manage/${booking.manageToken}`}>Gestionar mi cita</Link>
               </Button>
               <Button asChild variant="ghost">
-                <Link href="/">Back to home</Link>
+                <Link href="/">Volver al inicio</Link>
               </Button>
             </div>
           </CardContent>

@@ -8,7 +8,7 @@ import { serviceSchema } from "@/lib/validations";
 export async function createService(input: unknown) {
   await requireSession();
   const parsed = serviceSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
 
   const { staffIds, ...data } = parsed.data;
   const count = await prisma.service.count();
@@ -30,7 +30,7 @@ export async function createService(input: unknown) {
 export async function updateService(id: string, input: unknown) {
   await requireSession();
   const parsed = serviceSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
 
   const { staffIds, ...data } = parsed.data;
 
@@ -55,7 +55,7 @@ export async function deleteService(id: string) {
     where: { serviceId: id, startsAt: { gte: new Date() }, status: { in: ["CONFIRMED", "PENDING"] } },
   });
   if (upcoming > 0) {
-    throw new Error("This service has upcoming appointments. Deactivate it instead of deleting.");
+    throw new Error("Este servicio tiene citas próximas. Desactívalo en lugar de eliminarlo.");
   }
   await prisma.service.delete({ where: { id } });
   revalidatePath("/admin/services");

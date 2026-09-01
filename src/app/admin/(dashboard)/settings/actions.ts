@@ -9,7 +9,7 @@ import { brandingSchema, businessSettingsSchema } from "@/lib/validations";
 export async function updateBusinessProfile(input: unknown) {
   await requireSession();
   const parsed = businessSettingsSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
 
   const business = await getBusiness();
   const data = parsed.data;
@@ -37,7 +37,7 @@ export async function updateBusinessProfile(input: unknown) {
 export async function updateBranding(input: unknown) {
   await requireSession();
   const parsed = brandingSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
 
   const business = await getBusiness();
   const data = parsed.data;

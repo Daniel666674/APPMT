@@ -20,10 +20,10 @@ interface Props {
 }
 
 const FONT_LABELS: Record<Props["fontFamily"], string> = {
-  inter: "Inter (default)",
-  system: "System UI",
+  inter: "Inter (predeterminada)",
+  system: "Del sistema",
   serif: "Serif",
-  mono: "Monospace",
+  mono: "Monoespaciada",
 };
 
 export function BrandingForm({ initial }: { initial: Props }) {
@@ -40,10 +40,10 @@ export function BrandingForm({ initial }: { initial: Props }) {
     setSaving(true);
     try {
       await updateBranding(values);
-      toast.success("Branding saved — visitors will see it on next load");
+      toast.success("Marca guardada. Tus clientes la verán al recargar.");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't save branding");
+      toast.error(err instanceof Error ? err.message : "No pudimos guardar la marca");
     } finally {
       setSaving(false);
     }
@@ -54,18 +54,18 @@ export function BrandingForm({ initial }: { initial: Props }) {
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="logoUrl">Logo URL</Label>
+            <Label htmlFor="logoUrl">Logo (URL)</Label>
             <Input id="logoUrl" value={values.logoUrl} onChange={(e) => set("logoUrl", e.target.value)} placeholder="https://…" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="faviconUrl">Favicon URL</Label>
+            <Label htmlFor="faviconUrl">Favicon (URL)</Label>
             <Input id="faviconUrl" value={values.faviconUrl} onChange={(e) => set("faviconUrl", e.target.value)} placeholder="https://…" />
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="primaryColor">Primary color</Label>
+            <Label htmlFor="primaryColor">Color principal</Label>
             <div className="flex items-center gap-2">
               <input
                 id="primaryColor"
@@ -78,7 +78,7 @@ export function BrandingForm({ initial }: { initial: Props }) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="accentColor">Accent color</Label>
+            <Label htmlFor="accentColor">Color de acento</Label>
             <div className="flex items-center gap-2">
               <input
                 id="accentColor"
@@ -94,7 +94,7 @@ export function BrandingForm({ initial }: { initial: Props }) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label>Font</Label>
+            <Label>Tipografía</Label>
             <Select value={values.fontFamily} onValueChange={(v) => set("fontFamily", v as Props["fontFamily"])}>
               <SelectTrigger>
                 <SelectValue />
@@ -109,26 +109,26 @@ export function BrandingForm({ initial }: { initial: Props }) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Theme mode</Label>
+            <Label>Modo de color</Label>
             <Select value={values.themeMode} onValueChange={(v) => set("themeMode", v as Props["themeMode"])}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="light">Claro</SelectItem>
+                <SelectItem value="dark">Oscuro</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <Button type="submit" variant="brand" disabled={saving}>
-          {saving ? "Saving…" : "Save branding"}
+          {saving ? "Guardando…" : "Guardar marca"}
         </Button>
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-medium">Live preview</p>
+        <p className="text-sm font-medium">Vista previa</p>
         <div className="overflow-hidden rounded-xl border border-border shadow-sm">
           <div className="px-4 py-3" style={{ backgroundColor: values.primaryColor }}>
             {values.logoUrl ? (
@@ -136,28 +136,28 @@ export function BrandingForm({ initial }: { initial: Props }) {
               <img src={values.logoUrl} alt="Logo" className="h-6 w-auto object-contain" />
             ) : (
               <span className="font-bold" style={{ color: readableForeground(values.primaryColor) }}>
-                Your Business
+                Tu negocio
               </span>
             )}
           </div>
           <div className="space-y-3 bg-background p-4">
-            <p className="text-sm font-semibold">Choose a service</p>
+            <p className="text-sm font-semibold">Elige un servicio</p>
             <div className="rounded-lg border border-border p-3">
-              <p className="text-sm font-medium">Haircut</p>
+              <p className="text-sm font-medium">Corte de cabello</p>
               <p className="text-xs text-muted-foreground">30 min</p>
               <button
                 type="button"
                 className="mt-2 rounded-md px-3 py-1.5 text-xs font-semibold"
                 style={{ backgroundColor: values.primaryColor, color: readableForeground(values.primaryColor) }}
               >
-                Book
+                Reservar
               </button>
             </div>
             <span
               className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
               style={{ backgroundColor: values.accentColor, color: readableForeground(values.accentColor) }}
             >
-              Accent badge
+              Etiqueta de acento
             </span>
           </div>
         </div>

@@ -1,22 +1,22 @@
 import { z } from "zod";
 
-export const emailSchema = z.string().trim().toLowerCase().email("Enter a valid email address");
+export const emailSchema = z.string().trim().toLowerCase().email("Escribe un correo electrónico válido");
 export const phoneSchema = z
   .string()
   .trim()
-  .min(7, "Enter a valid phone number")
-  .max(20, "Enter a valid phone number");
+  .min(7, "Escribe un número de teléfono válido")
+  .max(20, "Escribe un número de teléfono válido");
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(1, "La contraseña es obligatoria"),
 });
 
 export const createBookingSchema = z.object({
   serviceId: z.string().min(1),
   staffId: z.string().min(1),
-  startsAt: z.string().datetime({ message: "Invalid start time" }),
-  customerName: z.string().trim().min(1, "Name is required").max(120),
+  startsAt: z.string().datetime({ message: "Hora de inicio inválida" }),
+  customerName: z.string().trim().min(1, "El nombre es obligatorio").max(120),
   customerEmail: emailSchema,
   customerPhone: z.string().trim().max(20).optional().or(z.literal("")),
   customerNotes: z.string().trim().max(1000).optional().or(z.literal("")),
@@ -26,7 +26,7 @@ export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export const availabilityQuerySchema = z.object({
   serviceId: z.string().min(1),
   staffId: z.string().min(1).optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be YYYY-MM-DD"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato AAAA-MM-DD"),
 });
 
 export const cancelBookingSchema = z.object({
@@ -34,22 +34,22 @@ export const cancelBookingSchema = z.object({
 });
 
 export const serviceSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(120),
+  name: z.string().trim().min(1, "El nombre es obligatorio").max(120),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   durationMinutes: z.coerce.number().int().min(5).max(60 * 8),
   price: z.coerce.number().min(0).max(1_000_000).optional().nullable(),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color").optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido").optional(),
   active: z.boolean().optional(),
   staffIds: z.array(z.string()).optional(),
 });
 export type ServiceInput = z.infer<typeof serviceSchema>;
 
 export const staffSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(120),
+  name: z.string().trim().min(1, "El nombre es obligatorio").max(120),
   email: emailSchema.optional().or(z.literal("")),
   phone: z.string().trim().max(20).optional().or(z.literal("")),
   bio: z.string().trim().max(2000).optional().or(z.literal("")),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color").optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido").optional(),
   active: z.boolean().optional(),
   serviceIds: z.array(z.string()).optional(),
 });
@@ -109,8 +109,8 @@ export const businessSettingsSchema = z.object({
 export const brandingSchema = z.object({
   logoUrl: z.string().trim().max(500).optional().or(z.literal("")),
   faviconUrl: z.string().trim().max(500).optional().or(z.literal("")),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido"),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido"),
   fontFamily: z.enum(["inter", "system", "serif", "mono"]),
   themeMode: z.enum(["light", "dark", "auto"]),
 });

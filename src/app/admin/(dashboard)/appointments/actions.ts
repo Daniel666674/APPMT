@@ -11,7 +11,7 @@ import { adminCreateBookingSchema } from "@/lib/validations";
 export async function createAppointment(input: unknown) {
   await requireSession();
   const parsed = adminCreateBookingSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
   const data = parsed.data;
 
   const [service, staff, eligible] = await Promise.all([
@@ -19,9 +19,9 @@ export async function createAppointment(input: unknown) {
     prisma.staff.findUnique({ where: { id: data.staffId } }),
     staffCanPerformService(data.staffId, data.serviceId),
   ]);
-  if (!service) throw new Error("Service not found");
-  if (!staff) throw new Error("Staff member not found");
-  if (!eligible) throw new Error("This staff member cannot perform this service");
+  if (!service) throw new Error("Servicio no encontrado");
+  if (!staff) throw new Error("Persona no encontrada");
+  if (!eligible) throw new Error("Esta persona no realiza este servicio");
 
   const startsAt = new Date(data.startsAt);
   const endsAt = new Date(startsAt.getTime() + service.durationMinutes * 60_000);
@@ -34,7 +34,7 @@ export async function createAppointment(input: unknown) {
       endsAt: { gt: startsAt },
     },
   });
-  if (overlap) throw new Error("This staff member already has an appointment at that time.");
+  if (overlap) throw new Error("Esta persona ya tiene una cita a esa hora.");
 
   const customer = await prisma.customer.upsert({
     where: { email: data.customerEmail },
@@ -56,7 +56,7 @@ export async function createAppointment(input: unknown) {
       },
     });
   } catch {
-    throw new Error("That time was just booked. Please choose another time.");
+    throw new Error("Ese horario acaba de ocuparse. Elige otro.");
   }
 
   if (booking.status === "CONFIRMED") {
@@ -90,7 +90,7 @@ export async function updateAppointmentStatus(id: string, status: "PENDING" | "C
     where: { id },
     include: { service: true, staff: true, customer: true },
   });
-  if (!booking) throw new Error("Appointment not found");
+  if (!booking) throw new Error("Cita no encontrada");
 
   const updated = await prisma.booking.update({
     where: { id },

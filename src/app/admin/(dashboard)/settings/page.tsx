@@ -17,8 +17,8 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-sm text-muted-foreground">Everything here drives what customers see — no code changes needed.</p>
+        <h1 className="text-2xl font-bold">Configuración</h1>
+        <p className="text-sm text-muted-foreground">Todo lo de aquí define lo que ven tus clientes. No hace falta tocar código.</p>
       </div>
 
       <Card>
@@ -26,8 +26,8 @@ export default async function SettingsPage() {
           <Tabs defaultValue="general">
             <TabsList>
               <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="branding">Branding</TabsTrigger>
-              <TabsTrigger value="holidays">Holidays</TabsTrigger>
+              <TabsTrigger value="branding">Marca</TabsTrigger>
+              <TabsTrigger value="holidays">Festivos</TabsTrigger>
             </TabsList>
             <TabsContent value="general">
               <GeneralForm
@@ -68,8 +68,8 @@ export default async function SettingsPage() {
             <TabsContent value="holidays">
               <Card className="border-0 shadow-none">
                 <CardHeader className="px-0 pt-0">
-                  <CardTitle className="text-base">Business-wide holidays</CardTitle>
-                  <CardDescription>Closes the whole business — every staff member — for the day.</CardDescription>
+                  <CardTitle className="text-base">Días festivos del negocio</CardTitle>
+                  <CardDescription>Cierra el negocio completo, para todo el equipo, ese día.</CardDescription>
                 </CardHeader>
                 <CardContent className="px-0">
                   <TimeOffManager

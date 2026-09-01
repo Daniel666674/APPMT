@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { addDays, format, subDays } from "date-fns";
+import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatBusinessTime } from "@/lib/availability";
 import { getBusiness } from "@/lib/business";
@@ -41,25 +42,25 @@ export default async function AppointmentsPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Appointments</h1>
+          <h1 className="text-2xl font-bold">Citas</h1>
           <p className="text-sm text-muted-foreground">
-            {format(new Date(`${date}T00:00:00`), "EEEE, MMMM d, yyyy")}
-            {isToday && " · Today"}
+            {format(new Date(`${date}T00:00:00`), "EEEE d 'de' MMMM 'de' yyyy", { locale: es })}
+            {isToday && " · Hoy"}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="icon">
-            <Link href={`/admin/appointments?date=${prevDate}`} aria-label="Previous day">
+            <Link href={`/admin/appointments?date=${prevDate}`} aria-label="Día anterior">
               <ChevronLeft className="h-4 w-4" />
             </Link>
           </Button>
           {!isToday && (
             <Button asChild variant="outline" size="sm">
-              <Link href="/admin/appointments">Today</Link>
+              <Link href="/admin/appointments">Hoy</Link>
             </Button>
           )}
           <Button asChild variant="outline" size="icon">
-            <Link href={`/admin/appointments?date=${nextDate}`} aria-label="Next day">
+            <Link href={`/admin/appointments?date=${nextDate}`} aria-label="Día siguiente">
               <ChevronRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -73,7 +74,7 @@ export default async function AppointmentsPage({
       <Card>
         <CardContent className="divide-y divide-border p-0">
           {bookings.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">No appointments on this day.</p>
+            <p className="py-10 text-center text-sm text-muted-foreground">No hay citas para este día.</p>
           ) : (
             bookings.map((b) => (
               <div key={b.id} className="flex flex-wrap items-center gap-4 px-6 py-4">

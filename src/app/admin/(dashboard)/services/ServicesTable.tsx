@@ -40,21 +40,21 @@ export function ServicesTable({
       await toggleServiceActive(id, active);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't update service");
+      toast.error(err instanceof Error ? err.message : "No pudimos actualizar el servicio");
     } finally {
       setPendingId(null);
     }
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete "${name}"? This can't be undone.`)) return;
+    if (!confirm(`¿Eliminar «${name}»? Esta acción no se puede deshacer.`)) return;
     setPendingId(id);
     try {
       await deleteService(id);
-      toast.success("Service deleted");
+      toast.success("Servicio eliminado");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't delete service");
+      toast.error(err instanceof Error ? err.message : "No pudimos eliminar el servicio");
     } finally {
       setPendingId(null);
     }
@@ -67,7 +67,7 @@ export function ServicesTable({
           staffOptions={staffOptions}
           trigger={
             <Button variant="brand" size="sm">
-              <Plus className="h-4 w-4" /> New service
+              <Plus className="h-4 w-4" /> Nuevo servicio
             </Button>
           }
         />
@@ -75,18 +75,18 @@ export function ServicesTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Service</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Active</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>Servicio</TableHead>
+            <TableHead>Duración</TableHead>
+            <TableHead>Precio</TableHead>
+            <TableHead>Activo</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {services.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
-                No services yet. Create your first one.
+                Aún no hay servicios. Crea el primero.
               </TableCell>
             </TableRow>
           ) : (

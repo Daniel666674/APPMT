@@ -11,12 +11,12 @@ export default async function StaffPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Staff</h1>
-        <p className="text-sm text-muted-foreground">Manage who provides services and their working hours.</p>
+        <h1 className="text-2xl font-bold">Equipo</h1>
+        <p className="text-sm text-muted-foreground">Administra quién presta los servicios y sus horarios de trabajo.</p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Team members</CardTitle>
+          <CardTitle>Miembros del equipo</CardTitle>
         </CardHeader>
         <CardContent>
           <StaffTable

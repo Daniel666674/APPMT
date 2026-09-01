@@ -27,14 +27,14 @@ export default async function StaffAvailabilityPage({ params }: { params: Promis
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{staff.name}&apos;s availability</h1>
-        <p className="text-sm text-muted-foreground">Set weekly working hours and add one-off time off.</p>
+        <h1 className="text-2xl font-bold">Horarios de {staff.name}</h1>
+        <p className="text-sm text-muted-foreground">Define el horario semanal y agrega ausencias puntuales.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Weekly hours</CardTitle>
-          <CardDescription>Business-local time. Toggle a day off, or add multiple shifts (e.g. split lunch hours).</CardDescription>
+          <CardTitle>Horario semanal</CardTitle>
+          <CardDescription>En la hora local del negocio. Apaga un día para cerrarlo o agrega varios turnos (por ejemplo, partido por almuerzo).</CardDescription>
         </CardHeader>
         <CardContent>
           <WeeklyAvailabilityEditor staffId={id} initialSchedule={schedule} />
@@ -43,8 +43,8 @@ export default async function StaffAvailabilityPage({ params }: { params: Promis
 
       <Card>
         <CardHeader>
-          <CardTitle>Time off</CardTitle>
-          <CardDescription>Vacation days, sick days, or any date this person is unavailable.</CardDescription>
+          <CardTitle>Ausencias</CardTitle>
+          <CardDescription>Vacaciones, incapacidades o cualquier día en que esta persona no atiende.</CardDescription>
         </CardHeader>
         <CardContent>
           <TimeOffManager

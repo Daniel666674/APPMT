@@ -38,11 +38,11 @@ export default async function HomePage() {
         </section>
 
         <section className="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-          <h2 className="mb-6 text-xl font-semibold">Choose a service</h2>
+          <h2 className="mb-6 text-xl font-semibold">Elige un servicio</h2>
           {services.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
-                No services are published yet. Add one from the admin dashboard.
+                Todavía no hay servicios publicados. Agrega uno desde el panel de administración.
               </CardContent>
             </Card>
           ) : (
@@ -68,7 +68,7 @@ export default async function HomePage() {
                           {formatDuration(service.durationMinutes)}
                         </span>
                         <Button variant="brand" size="sm">
-                          Book <ArrowRight className="h-3.5 w-3.5" />
+                          Reservar <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </CardContent>
@@ -82,7 +82,7 @@ export default async function HomePage() {
         {business.aboutText ? (
           <section className="border-t border-border bg-secondary/40 py-16">
             <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-              <h2 className="mb-3 text-xl font-semibold">About {business.name}</h2>
+              <h2 className="mb-3 text-xl font-semibold">Sobre {business.name}</h2>
               <p className="whitespace-pre-line text-muted-foreground">{business.aboutText}</p>
             </div>
           </section>

@@ -8,20 +8,20 @@ export async function GET(request: NextRequest) {
   const params = Object.fromEntries(request.nextUrl.searchParams);
   const parsed = availabilityQuerySchema.safeParse(params);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid query" }, { status: 400 });
+    return NextResponse.json({ error: "Consulta inválida" }, { status: 400 });
   }
   const { serviceId, staffId, date } = parsed.data;
 
   const business = await getBusiness();
   const service = await prisma.service.findUnique({ where: { id: serviceId } });
   if (!service || !service.active) {
-    return NextResponse.json({ error: "Service not found" }, { status: 404 });
+    return NextResponse.json({ error: "Servicio no encontrado" }, { status: 404 });
   }
 
   let staffIds: string[];
   if (staffId) {
     const eligible = await staffCanPerformService(staffId, serviceId);
-    if (!eligible) return NextResponse.json({ error: "Staff cannot perform this service" }, { status: 400 });
+    if (!eligible) return NextResponse.json({ error: "Esta persona no realiza este servicio" }, { status: 400 });
     staffIds = [staffId];
   } else {
     const links = await prisma.serviceStaff.findMany({

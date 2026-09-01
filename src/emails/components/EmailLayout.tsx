@@ -30,7 +30,7 @@ export function EmailLayout(props: {
           </Section>
           <Hr style={{ borderColor: "#e4e4e7", margin: 0 }} />
           <Section style={{ padding: "16px 32px" }}>
-            <Text style={{ fontSize: 12, color: "#a1a1aa", margin: 0 }}>{businessName} · Sent via Appointment Scheduler</Text>
+            <Text style={{ fontSize: 12, color: "#a1a1aa", margin: 0 }}>{businessName} · Enviado con Agenda de citas</Text>
           </Section>
         </Container>
       </Body>

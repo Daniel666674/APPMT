@@ -1,5 +1,6 @@
 import "server-only";
 import { addDays, addMinutes, format, startOfDay } from "date-fns";
+import { es } from "date-fns/locale";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import type { Business } from "@/lib/business";
@@ -136,9 +137,9 @@ export async function staffCanPerformService(staffId: string, serviceId: string)
 }
 
 export function formatBusinessDate(date: Date, timeZone: string) {
-  return format(toZonedTime(date, timeZone), "EEEE, MMMM d, yyyy");
+  return format(toZonedTime(date, timeZone), "EEEE d 'de' MMMM 'de' yyyy", { locale: es });
 }
 
 export function formatBusinessTime(date: Date, timeZone: string) {
-  return format(toZonedTime(date, timeZone), "h:mm a");
+  return format(toZonedTime(date, timeZone), "h:mm a", { locale: es });
 }

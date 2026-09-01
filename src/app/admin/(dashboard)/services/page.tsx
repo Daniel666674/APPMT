@@ -13,12 +13,12 @@ export default async function ServicesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Services</h1>
-        <p className="text-sm text-muted-foreground">What customers can book, how long it takes, and who can perform it.</p>
+        <h1 className="text-2xl font-bold">Servicios</h1>
+        <p className="text-sm text-muted-foreground">Lo que tus clientes pueden reservar, cuánto dura y quién lo realiza.</p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>All services</CardTitle>
+          <CardTitle>Todos los servicios</CardTitle>
         </CardHeader>
         <CardContent>
           <ServicesTable

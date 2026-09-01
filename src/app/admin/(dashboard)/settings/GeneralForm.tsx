@@ -32,15 +32,19 @@ interface Props {
 }
 
 const COMMON_TIMEZONES = [
+  "America/Bogota",
+  "America/Mexico_City",
+  "America/Lima",
+  "America/Santiago",
+  "America/Argentina/Buenos_Aires",
+  "America/Caracas",
+  "America/Guayaquil",
+  "America/Panama",
+  "America/Santo_Domingo",
   "America/New_York",
   "America/Chicago",
   "America/Denver",
   "America/Los_Angeles",
-  "America/Phoenix",
-  "America/Anchorage",
-  "Pacific/Honolulu",
-  "Europe/London",
-  "Europe/Paris",
   "Europe/Madrid",
   "UTC",
 ];
@@ -59,10 +63,10 @@ export function GeneralForm({ initial }: { initial: Props }) {
     setSaving(true);
     try {
       await updateBusinessProfile(values);
-      toast.success("Settings saved");
+      toast.success("Configuración guardada");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't save settings");
+      toast.error(err instanceof Error ? err.message : "No pudimos guardar la configuración");
     } finally {
       setSaving(false);
     }
@@ -71,14 +75,14 @@ export function GeneralForm({ initial }: { initial: Props }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">Business profile</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground">Datos del negocio</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Business name</Label>
+            <Label htmlFor="name">Nombre del negocio</Label>
             <Input id="name" value={values.name} onChange={(e) => set("name", e.target.value)} required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="timezone">Timezone</Label>
+            <Label htmlFor="timezone">Zona horaria</Label>
             <select
               id="timezone"
               value={values.timezone}
@@ -93,64 +97,64 @@ export function GeneralForm({ initial }: { initial: Props }) {
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="currency">Currency (ISO code)</Label>
+            <Label htmlFor="currency">Moneda (código ISO)</Label>
             <Input id="currency" value={values.currency} onChange={(e) => set("currency", e.target.value.toUpperCase())} maxLength={3} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="contactEmail">Contact email</Label>
+            <Label htmlFor="contactEmail">Correo de contacto</Label>
             <Input id="contactEmail" type="email" value={values.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="contactPhone">Contact phone</Label>
+            <Label htmlFor="contactPhone">Teléfono de contacto</Label>
             <Input id="contactPhone" value={values.contactPhone} onChange={(e) => set("contactPhone", e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">Dirección</Label>
             <Input id="address" value={values.address} onChange={(e) => set("address", e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="website">Website</Label>
+            <Label htmlFor="website">Sitio web</Label>
             <Input id="website" value={values.website} onChange={(e) => set("website", e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="instagramUrl">Instagram URL</Label>
+            <Label htmlFor="instagramUrl">Instagram (URL)</Label>
             <Input id="instagramUrl" value={values.instagramUrl} onChange={(e) => set("instagramUrl", e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="facebookUrl">Facebook URL</Label>
+            <Label htmlFor="facebookUrl">Facebook (URL)</Label>
             <Input id="facebookUrl" value={values.facebookUrl} onChange={(e) => set("facebookUrl", e.target.value)} />
           </div>
         </div>
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">Booking page copy</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground">Textos de la página de reservas</h3>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="heroHeadline">Headline</Label>
+            <Label htmlFor="heroHeadline">Título principal</Label>
             <Input
               id="heroHeadline"
               value={values.heroHeadline}
               onChange={(e) => set("heroHeadline", e.target.value)}
-              placeholder={`Book your appointment with ${values.name}`}
+              placeholder={`Reserva tu cita en ${values.name}`}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="heroSubheadline">Subheadline</Label>
+            <Label htmlFor="heroSubheadline">Subtítulo</Label>
             <Input id="heroSubheadline" value={values.heroSubheadline} onChange={(e) => set("heroSubheadline", e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="aboutText">About section</Label>
+            <Label htmlFor="aboutText">Sección «Sobre nosotros»</Label>
             <Textarea id="aboutText" rows={4} value={values.aboutText} onChange={(e) => set("aboutText", e.target.value)} />
           </div>
         </div>
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">Booking rules</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground">Reglas de reserva</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="slotInterval">Time slot interval (minutes)</Label>
+            <Label htmlFor="slotInterval">Intervalo entre horarios (minutos)</Label>
             <Input
               id="slotInterval"
               type="number"
@@ -161,7 +165,7 @@ export function GeneralForm({ initial }: { initial: Props }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="buffer">Buffer between appointments (minutes)</Label>
+            <Label htmlFor="buffer">Descanso entre citas (minutos)</Label>
             <Input
               id="buffer"
               type="number"
@@ -172,7 +176,7 @@ export function GeneralForm({ initial }: { initial: Props }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="minNotice">Minimum notice (minutes)</Label>
+            <Label htmlFor="minNotice">Anticipación mínima (minutos)</Label>
             <Input
               id="minNotice"
               type="number"
@@ -182,7 +186,7 @@ export function GeneralForm({ initial }: { initial: Props }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="maxAdvance">Max days in advance</Label>
+            <Label htmlFor="maxAdvance">Máximo de días de anticipación</Label>
             <Input
               id="maxAdvance"
               type="number"
@@ -192,7 +196,7 @@ export function GeneralForm({ initial }: { initial: Props }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cancelWindow">Cancellation window (hours)</Label>
+            <Label htmlFor="cancelWindow">Ventana de cancelación (horas)</Label>
             <Input
               id="cancelWindow"
               type="number"
@@ -203,13 +207,13 @@ export function GeneralForm({ initial }: { initial: Props }) {
           </div>
           <div className="flex items-center gap-2 pt-6">
             <Switch checked={values.requirePhone} onCheckedChange={(v) => set("requirePhone", v)} />
-            <Label>Require phone number at booking</Label>
+            <Label>Exigir teléfono al reservar</Label>
           </div>
         </div>
       </section>
 
       <Button type="submit" variant="brand" disabled={saving}>
-        {saving ? "Saving…" : "Save changes"}
+        {saving ? "Guardando…" : "Guardar cambios"}
       </Button>
     </form>
   );

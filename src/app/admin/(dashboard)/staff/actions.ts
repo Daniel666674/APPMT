@@ -8,7 +8,7 @@ import { staffSchema, weeklyAvailabilitySchema, timeOffSchema } from "@/lib/vali
 export async function createStaff(input: unknown) {
   await requireSession();
   const parsed = staffSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
 
   const { serviceIds, ...data } = parsed.data;
   const count = await prisma.staff.count();
@@ -31,7 +31,7 @@ export async function createStaff(input: unknown) {
 export async function updateStaff(id: string, input: unknown) {
   await requireSession();
   const parsed = staffSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
 
   const { serviceIds, ...data } = parsed.data;
 
@@ -56,7 +56,7 @@ export async function deleteStaff(id: string) {
     where: { staffId: id, startsAt: { gte: new Date() }, status: { in: ["CONFIRMED", "PENDING"] } },
   });
   if (upcoming > 0) {
-    throw new Error("This staff member has upcoming appointments. Deactivate instead of deleting.");
+    throw new Error("Esta persona tiene citas próximas. Desactívala en lugar de eliminarla.");
   }
   await prisma.staff.delete({ where: { id } });
   revalidatePath("/admin/staff");
@@ -73,11 +73,11 @@ export async function toggleStaffActive(id: string, active: boolean) {
 export async function saveWeeklyAvailability(staffId: string, input: unknown) {
   await requireSession();
   const parsed = weeklyAvailabilitySchema.safeParse(input);
-  if (!parsed.success) throw new Error("Invalid schedule");
+  if (!parsed.success) throw new Error("Horario inválido");
 
   for (const block of parsed.data.blocks) {
     if (block.endMinute <= block.startMinute) {
-      throw new Error("End time must be after start time");
+      throw new Error("La hora de fin debe ser posterior a la de inicio");
     }
   }
 
@@ -94,7 +94,7 @@ export async function saveWeeklyAvailability(staffId: string, input: unknown) {
 export async function createTimeOff(input: unknown) {
   await requireSession();
   const parsed = timeOffSchema.safeParse(input);
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
 
   await prisma.timeOff.create({
     data: {

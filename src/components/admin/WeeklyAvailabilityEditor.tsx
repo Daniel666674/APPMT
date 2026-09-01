@@ -63,10 +63,10 @@ export function WeeklyAvailabilityEditor({
         blocks.map((b) => ({ dayOfWeek: Number(day), ...b }))
       );
       await saveWeeklyAvailability(staffId, { blocks });
-      toast.success("Weekly hours saved");
+      toast.success("Horario semanal guardado");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't save hours");
+      toast.error(err instanceof Error ? err.message : "No pudimos guardar el horario");
     } finally {
       setSaving(false);
     }
@@ -98,7 +98,7 @@ export function WeeklyAvailabilityEditor({
                       onChange={(e) => updateBlock(day, i, "startMinute", e.target.value)}
                       className="rounded-md border border-input bg-background px-2 py-1 text-sm"
                     />
-                    <span className="text-muted-foreground">to</span>
+                    <span className="text-muted-foreground">a</span>
                     <input
                       type="time"
                       value={minutesToInputTime(b.endMinute)}
@@ -116,14 +116,14 @@ export function WeeklyAvailabilityEditor({
                   </div>
                 ))
               ) : (
-                <p className="pt-1.5 text-sm text-muted-foreground">Closed</p>
+                <p className="pt-1.5 text-sm text-muted-foreground">Cerrado</p>
               )}
             </div>
           </div>
         );
       })}
       <Button variant="brand" onClick={handleSave} disabled={saving}>
-        {saving ? "Saving…" : "Save weekly hours"}
+        {saving ? "Guardando…" : "Guardar horario semanal"}
       </Button>
     </div>
   );

@@ -40,21 +40,21 @@ export function StaffTable({
       await toggleStaffActive(id, active);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't update");
+      toast.error(err instanceof Error ? err.message : "No pudimos actualizar");
     } finally {
       setPendingId(null);
     }
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Remove "${name}"? This can't be undone.`)) return;
+    if (!confirm(`¿Eliminar a «${name}»? Esta acción no se puede deshacer.`)) return;
     setPendingId(id);
     try {
       await deleteStaff(id);
-      toast.success("Staff member removed");
+      toast.success("Persona eliminada del equipo");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't remove staff member");
+      toast.error(err instanceof Error ? err.message : "No pudimos eliminar a esta persona");
     } finally {
       setPendingId(null);
     }
@@ -67,7 +67,7 @@ export function StaffTable({
           serviceOptions={serviceOptions}
           trigger={
             <Button variant="brand" size="sm">
-              <Plus className="h-4 w-4" /> New staff member
+              <Plus className="h-4 w-4" /> Agregar persona
             </Button>
           }
         />
@@ -75,17 +75,17 @@ export function StaffTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>Active</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Contacto</TableHead>
+            <TableHead>Activo</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {staff.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
-                No staff members yet.
+                Aún no hay personas en el equipo.
               </TableCell>
             </TableRow>
           ) : (
@@ -104,7 +104,7 @@ export function StaffTable({
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="icon" asChild>
-                      <Link href={`/admin/staff/${s.id}/availability`} title="Availability">
+                      <Link href={`/admin/staff/${s.id}/availability`} title="Horarios">
                         <CalendarClock className="h-4 w-4" />
                       </Link>
                     </Button>

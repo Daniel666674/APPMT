@@ -33,16 +33,16 @@ export default async function AdminDashboardPage() {
   ]);
 
   const stats = [
-    { label: "Today", value: todayCount, icon: CalendarDays },
-    { label: "This week", value: weekCount, icon: TrendingUp },
-    { label: "Total customers", value: customerCount, icon: Users },
+    { label: "Hoy", value: todayCount, icon: CalendarDays },
+    { label: "Esta semana", value: weekCount, icon: TrendingUp },
+    { label: "Clientes totales", value: customerCount, icon: Users },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">A quick look at what&apos;s coming up.</p>
+        <h1 className="text-2xl font-bold">Inicio</h1>
+        <p className="text-sm text-muted-foreground">Un vistazo rápido a lo que viene.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -63,11 +63,11 @@ export default async function AdminDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming appointments</CardTitle>
+          <CardTitle>Próximas citas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
           {upcoming.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Nothing on the books yet.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay citas agendadas.</p>
           ) : (
             upcoming.map((b) => (
               <div key={b.id} className="flex items-center gap-3 border-b border-border py-3 last:border-0">
@@ -78,16 +78,18 @@ export default async function AdminDashboardPage() {
                   </p>
                   <p className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    {formatBusinessDate(b.startsAt, business.timezone)} at {formatBusinessTime(b.startsAt, business.timezone)}
+                    {formatBusinessDate(b.startsAt, business.timezone)} a las {formatBusinessTime(b.startsAt, business.timezone)}
                   </p>
                 </div>
-                <Badge variant={b.status === "CONFIRMED" ? "success" : "warning"}>{b.status}</Badge>
+                <Badge variant={b.status === "CONFIRMED" ? "success" : "warning"}>
+                  {b.status === "CONFIRMED" ? "Confirmada" : "Pendiente"}
+                </Badge>
               </div>
             ))
           )}
           <div className="pt-3">
             <Link href="/admin/appointments" className="text-sm font-medium text-brand hover:underline">
-              View all appointments →
+              Ver todas las citas →
             </Link>
           </div>
         </CardContent>

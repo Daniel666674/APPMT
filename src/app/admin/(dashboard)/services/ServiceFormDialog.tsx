@@ -70,15 +70,15 @@ export function ServiceFormDialog({
       };
       if (initial?.id) {
         await updateService(initial.id, payload);
-        toast.success("Service updated");
+        toast.success("Servicio actualizado");
       } else {
         await createService(payload);
-        toast.success("Service created");
+        toast.success("Servicio creado");
       }
       setOpen(false);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      toast.error(err instanceof Error ? err.message : "Algo salió mal");
     } finally {
       setSubmitting(false);
     }
@@ -89,20 +89,20 @@ export function ServiceFormDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{initial?.id ? "Edit service" : "New service"}</DialogTitle>
+          <DialogTitle>{initial?.id ? "Editar servicio" : "Nuevo servicio"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="svc-name">Name</Label>
+            <Label htmlFor="svc-name">Nombre</Label>
             <Input id="svc-name" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="svc-desc">Description</Label>
+            <Label htmlFor="svc-desc">Descripción</Label>
             <Textarea id="svc-desc" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="svc-duration">Duration (minutes)</Label>
+              <Label htmlFor="svc-duration">Duración (minutos)</Label>
               <Input
                 id="svc-duration"
                 type="number"
@@ -114,12 +114,12 @@ export function ServiceFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="svc-price">Price (optional)</Label>
+              <Label htmlFor="svc-price">Precio (opcional)</Label>
               <Input id="svc-price" type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="svc-color">Calendar color</Label>
+            <Label htmlFor="svc-color">Color en el calendario</Label>
             <input
               id="svc-color"
               type="color"
@@ -129,10 +129,10 @@ export function ServiceFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Staff who can perform this service</Label>
+            <Label>Quién puede realizar este servicio</Label>
             <div className="flex flex-wrap gap-2">
               {staffOptions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Add staff members first.</p>
+                <p className="text-xs text-muted-foreground">Primero agrega personas al equipo.</p>
               ) : (
                 staffOptions.map((s) => (
                   <button
@@ -152,10 +152,10 @@ export function ServiceFormDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" variant="brand" disabled={submitting}>
-              {submitting ? "Saving…" : "Save"}
+              {submitting ? "Guardando…" : "Guardar"}
             </Button>
           </DialogFooter>
         </form>

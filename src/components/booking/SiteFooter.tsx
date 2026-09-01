@@ -52,7 +52,7 @@ export function SiteFooter({ business }: { business: Business }) {
           </div>
         ) : null}
         <p className="text-xs">
-          © {new Date().getFullYear()} {business.name}. All rights reserved.
+          © {new Date().getFullYear()} {business.name}. Todos los derechos reservados.
         </p>
       </div>
     </footer>

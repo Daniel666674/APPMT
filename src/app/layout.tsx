@@ -13,10 +13,10 @@ const inter = Inter({
 
 export async function generateMetadata(): Promise<Metadata> {
   const business = await getBusinessOrNull();
-  if (!business) return { title: "Appointment Scheduler" };
+  if (!business) return { title: "Agenda de citas" };
   return {
-    title: `${business.name} — Book an appointment`,
-    description: business.heroSubheadline ?? `Book your next appointment with ${business.name} online.`,
+    title: `${business.name} — Reserva tu cita`,
+    description: business.heroSubheadline ?? `Reserva tu próxima cita en ${business.name} por internet.`,
     icons: business.faviconUrl ? [{ url: business.faviconUrl }] : undefined,
   };
 }
@@ -29,7 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      lang="en"
+      lang="es"
       className={cn(inter.variable, "h-full antialiased", themeMode === "dark" && "dark")}
       style={style}
     >

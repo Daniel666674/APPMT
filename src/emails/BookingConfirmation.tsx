@@ -15,24 +15,24 @@ export function BookingConfirmationEmail(props: {
   const { businessName, logoUrl, primaryColor, customerName, serviceName, staffName, dateLabel, timeLabel, manageUrl } = props;
   return (
     <EmailLayout
-      previewText={`Your appointment with ${businessName} is confirmed for ${dateLabel}`}
+      previewText={`Tu cita en ${businessName} quedó confirmada para el ${dateLabel}`}
       businessName={businessName}
       logoUrl={logoUrl}
       primaryColor={primaryColor}
-      title="You're booked!"
+      title="¡Tu cita quedó confirmada!"
     >
-      <Text style={{ fontSize: 14, color: "#3f3f46" }}>Hi {customerName}, your appointment is confirmed.</Text>
+      <Text style={{ fontSize: 14, color: "#3f3f46" }}>Hola {customerName}, tu cita está confirmada.</Text>
       <Section style={{ backgroundColor: "#f4f4f5", borderRadius: 8, padding: "16px 20px", margin: "16px 0" }}>
-        <DetailRow label="Service" value={serviceName} />
-        <DetailRow label="With" value={staffName} />
-        <DetailRow label="Date" value={dateLabel} />
-        <DetailRow label="Time" value={timeLabel} />
+        <DetailRow label="Servicio" value={serviceName} />
+        <DetailRow label="Con" value={staffName} />
+        <DetailRow label="Fecha" value={dateLabel} />
+        <DetailRow label="Hora" value={timeLabel} />
       </Section>
       <Button href={manageUrl} style={{ backgroundColor: primaryColor, color: "#ffffff", padding: "12px 20px", borderRadius: 8, fontSize: 14, fontWeight: 600 }}>
-        Manage your appointment
+        Gestionar mi cita
       </Button>
       <Text style={{ fontSize: 12, color: "#a1a1aa", marginTop: 20 }}>
-        Need to cancel or reschedule? Use the button above — no account needed.
+        ¿Necesitas cancelar o cambiar la hora? Usa el botón de arriba. No necesitas crear una cuenta.
       </Text>
     </EmailLayout>
   );

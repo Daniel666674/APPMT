@@ -62,15 +62,15 @@ export function StaffFormDialog({
       const payload = { name, email, phone, bio, color, serviceIds };
       if (initial?.id) {
         await updateStaff(initial.id, payload);
-        toast.success("Staff member updated");
+        toast.success("Persona actualizada");
       } else {
         await createStaff(payload);
-        toast.success("Staff member added");
+        toast.success("Persona agregada");
       }
       setOpen(false);
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      toast.error(err instanceof Error ? err.message : "Algo salió mal");
     } finally {
       setSubmitting(false);
     }
@@ -81,29 +81,29 @@ export function StaffFormDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{initial?.id ? "Edit staff member" : "New staff member"}</DialogTitle>
+          <DialogTitle>{initial?.id ? "Editar persona" : "Agregar persona"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="staff-name">Name</Label>
+            <Label htmlFor="staff-name">Nombre</Label>
             <Input id="staff-name" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="staff-email">Email</Label>
+              <Label htmlFor="staff-email">Correo</Label>
               <Input id="staff-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="staff-phone">Phone</Label>
+              <Label htmlFor="staff-phone">Teléfono</Label>
               <Input id="staff-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="staff-bio">Bio</Label>
+            <Label htmlFor="staff-bio">Descripción</Label>
             <Textarea id="staff-bio" value={bio} onChange={(e) => setBio(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="staff-color">Calendar color</Label>
+            <Label htmlFor="staff-color">Color en el calendario</Label>
             <input
               id="staff-color"
               type="color"
@@ -113,10 +113,10 @@ export function StaffFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Services this person can perform</Label>
+            <Label>Servicios que realiza</Label>
             <div className="flex flex-wrap gap-2">
               {serviceOptions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Add services first.</p>
+                <p className="text-xs text-muted-foreground">Primero agrega servicios.</p>
               ) : (
                 serviceOptions.map((s) => (
                   <button
@@ -136,10 +136,10 @@ export function StaffFormDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" variant="brand" disabled={submitting}>
-              {submitting ? "Saving…" : "Save"}
+              {submitting ? "Guardando…" : "Guardar"}
             </Button>
           </DialogFooter>
         </form>

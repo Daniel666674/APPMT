@@ -59,7 +59,7 @@ export function BookingWizard({
       const data = await res.json();
       setSlots(data.slots ?? []);
     } catch {
-      setError("Couldn't load available times. Please try again.");
+      setError("No pudimos cargar los horarios. Intenta de nuevo.");
     } finally {
       setLoadingSlots(false);
     }
@@ -104,7 +104,7 @@ export function BookingWizard({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong. Please try again.");
+        setError(data.error ?? "Algo salió mal. Intenta de nuevo.");
         setStep("time");
         setSelectedSlot(null);
         if (date) fetchSlots(date);
@@ -112,7 +112,7 @@ export function BookingWizard({
       }
       router.push(`/confirmation/${data.id}`);
     } catch {
-      setError("Network error. Please try again.");
+      setError("Error de conexión. Intenta de nuevo.");
     } finally {
       setSubmitting(false);
     }
@@ -144,7 +144,7 @@ export function BookingWizard({
         <div className="space-y-6">
           {showAnyOption && (
             <div>
-              <p className="mb-2 text-sm font-medium">Choose a provider</p>
+              <p className="mb-2 text-sm font-medium">Elige con quién</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -154,7 +154,7 @@ export function BookingWizard({
                     staffId === ANY_STAFF ? "border-brand bg-brand text-brand-foreground" : "border-border hover:bg-secondary"
                   )}
                 >
-                  Any available
+                  Cualquiera disponible
                 </button>
                 {staffOptions.map((s) => (
                   <button
@@ -175,16 +175,16 @@ export function BookingWizard({
           )}
 
           <div>
-            <p className="mb-2 text-sm font-medium">Pick a date</p>
+            <p className="mb-2 text-sm font-medium">Elige la fecha</p>
             <DatePicker value={date} onChange={handleDateChange} minDate={minDate} maxDate={maxDate} />
           </div>
 
           {date && (
             <div>
-              <p className="mb-2 text-sm font-medium">Pick a time</p>
+              <p className="mb-2 text-sm font-medium">Elige la hora</p>
               {loadingSlots ? (
                 <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading times…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Cargando horarios…
                 </div>
               ) : slots && slots.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -205,7 +205,7 @@ export function BookingWizard({
               ) : (
                 <Card>
                   <CardContent className="py-6 text-center text-sm text-muted-foreground">
-                    No times available this day. Try another date.
+                    No hay horarios disponibles ese día. Prueba con otra fecha.
                   </CardContent>
                 </Card>
               )}

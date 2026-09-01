@@ -61,7 +61,7 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
         customerPhone,
         notes,
       });
-      toast.success("Appointment created");
+      toast.success("Cita creada");
       setOpen(false);
       setServiceId("");
       setStaffId("");
@@ -72,7 +72,7 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
       setNotes("");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't create appointment");
+      toast.error(err instanceof Error ? err.message : "No pudimos crear la cita");
     } finally {
       setSubmitting(false);
     }
@@ -82,20 +82,20 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="brand" size="sm">
-          <Plus className="h-4 w-4" /> New appointment
+          <Plus className="h-4 w-4" /> Nueva cita
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New appointment</DialogTitle>
+          <DialogTitle>Nueva cita</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Service</Label>
+              <Label>Servicio</Label>
               <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setStaffId(""); }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a service" />
+                  <SelectValue placeholder="Elige un servicio" />
                 </SelectTrigger>
                 <SelectContent>
                   {services.map((s) => (
@@ -107,10 +107,10 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Staff</Label>
+              <Label>Quién atiende</Label>
               <Select value={staffId} onValueChange={setStaffId} disabled={!serviceId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose staff" />
+                  <SelectValue placeholder="Elige una persona" />
                 </SelectTrigger>
                 <SelectContent>
                   {eligibleStaff.map((s) => (
@@ -123,33 +123,33 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="appt-datetime">Date &amp; time</Label>
+            <Label htmlFor="appt-datetime">Fecha y hora</Label>
             <Input id="appt-datetime" type="datetime-local" value={datetime} onChange={(e) => setDatetime(e.target.value)} required />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="appt-name">Customer name</Label>
+              <Label htmlFor="appt-name">Nombre del cliente</Label>
               <Input id="appt-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="appt-email">Customer email</Label>
+              <Label htmlFor="appt-email">Correo del cliente</Label>
               <Input id="appt-email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} required />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="appt-phone">Customer phone (optional)</Label>
+            <Label htmlFor="appt-phone">Teléfono del cliente (opcional)</Label>
             <Input id="appt-phone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="appt-notes">Internal notes (optional)</Label>
+            <Label htmlFor="appt-notes">Notas internas (opcional)</Label>
             <Textarea id="appt-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" variant="brand" disabled={submitting}>
-              {submitting ? "Creating…" : "Create appointment"}
+              {submitting ? "Creando…" : "Crear cita"}
             </Button>
           </DialogFooter>
         </form>

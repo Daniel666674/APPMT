@@ -15,8 +15,9 @@ import {
   startOfMonth,
   subMonths,
 } from "date-fns";
+import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, WEEKDAY_INITIALS } from "@/lib/utils";
 
 export function DatePicker({
   value,
@@ -54,23 +55,23 @@ export function DatePicker({
           onClick={() => setCursor((c) => subMonths(c, 1))}
           disabled={isSameMonth(cursor, minDate) || isBefore(cursor, minDate)}
           className="rounded-md p-1.5 hover:bg-secondary disabled:pointer-events-none disabled:opacity-30"
-          aria-label="Previous month"
+          aria-label="Mes anterior"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <p className="text-sm font-semibold">{format(cursor, "MMMM yyyy")}</p>
+        <p className="text-sm font-semibold">{format(cursor, "MMMM yyyy", { locale: es })}</p>
         <button
           type="button"
           onClick={() => setCursor((c) => addMonths(c, 1))}
           disabled={isSameMonth(cursor, maxDate) || isBefore(maxDate, cursor)}
           className="rounded-md p-1.5 hover:bg-secondary disabled:pointer-events-none disabled:opacity-30"
-          aria-label="Next month"
+          aria-label="Mes siguiente"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
-        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+        {WEEKDAY_INITIALS.map((d, i) => (
           <div key={i} className="py-1">
             {d}
           </div>

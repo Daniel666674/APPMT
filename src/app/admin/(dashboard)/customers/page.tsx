@@ -35,32 +35,32 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Customers</h1>
-        <p className="text-sm text-muted-foreground">Everyone who has booked an appointment.</p>
+        <h1 className="text-2xl font-bold">Clientes</h1>
+        <p className="text-sm text-muted-foreground">Todas las personas que han reservado una cita.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All customers</CardTitle>
+          <CardTitle>Todos los clientes</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <form method="GET" className="max-w-sm">
-            <Input name="q" defaultValue={q ?? ""} placeholder="Search by name, email, or phone…" />
+            <Input name="q" defaultValue={q ?? ""} placeholder="Buscar por nombre, correo o teléfono…" />
           </form>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Visits</TableHead>
-                <TableHead>Last booking</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Contacto</TableHead>
+                <TableHead>Visitas</TableHead>
+                <TableHead>Última cita</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {customers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
-                    No customers found.
+                    No encontramos clientes.
                   </TableCell>
                 </TableRow>
               ) : (

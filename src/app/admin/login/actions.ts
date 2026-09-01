@@ -15,17 +15,17 @@ export async function login(_prevState: LoginState | undefined, formData: FormDa
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (!user || !user.active) {
-    return { error: "Invalid email or password" };
+    return { error: "Correo o contraseña incorrectos" };
   }
 
   const valid = await verifyPassword(parsed.data.password, user.passwordHash);
   if (!valid) {
-    return { error: "Invalid email or password" };
+    return { error: "Correo o contraseña incorrectos" };
   }
 
   await createSessionCookie({ userId: user.id, email: user.email, name: user.name, role: user.role });

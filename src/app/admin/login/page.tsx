@@ -18,9 +18,9 @@ export default async function AdminLoginPage({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={business.logoUrl} alt={business.name} className="mx-auto h-10 w-auto object-contain" />
           ) : (
-            <CardTitle className="text-brand">{business?.name ?? "Appointment Scheduler"}</CardTitle>
+            <CardTitle className="text-brand">{business?.name ?? "Agenda de citas"}</CardTitle>
           )}
-          <p className="text-sm text-muted-foreground">Sign in to your dashboard</p>
+          <p className="text-sm text-muted-foreground">Inicia sesión en tu panel</p>
         </CardHeader>
         <CardContent>
           <LoginForm next={next} />

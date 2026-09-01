@@ -14,20 +14,20 @@ export function BookingCancelledEmail(props: {
   const { businessName, logoUrl, primaryColor, customerName, serviceName, dateLabel, timeLabel, bookAgainUrl } = props;
   return (
     <EmailLayout
-      previewText={`Your appointment with ${businessName} has been cancelled`}
+      previewText={`Tu cita en ${businessName} fue cancelada`}
       businessName={businessName}
       logoUrl={logoUrl}
       primaryColor={primaryColor}
-      title="Appointment cancelled"
+      title="Cita cancelada"
     >
-      <Text style={{ fontSize: 14, color: "#3f3f46" }}>Hi {customerName}, this appointment has been cancelled:</Text>
+      <Text style={{ fontSize: 14, color: "#3f3f46" }}>Hola {customerName}, esta cita fue cancelada:</Text>
       <Section style={{ backgroundColor: "#f4f4f5", borderRadius: 8, padding: "16px 20px", margin: "16px 0" }}>
-        <DetailRow label="Service" value={serviceName} />
-        <DetailRow label="Date" value={dateLabel} />
-        <DetailRow label="Time" value={timeLabel} />
+        <DetailRow label="Servicio" value={serviceName} />
+        <DetailRow label="Fecha" value={dateLabel} />
+        <DetailRow label="Hora" value={timeLabel} />
       </Section>
       <Text style={{ fontSize: 14, color: "#3f3f46" }}>
-        Want to rebook? <a href={bookAgainUrl} style={{ color: primaryColor }}>Find a new time</a>.
+        ¿Quieres reagendar? <a href={bookAgainUrl} style={{ color: primaryColor }}>Elige una nueva hora</a>.
       </Text>
     </EmailLayout>
   );

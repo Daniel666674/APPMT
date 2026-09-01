@@ -8,6 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CancelBookingButton } from "@/components/booking/CancelBookingButton";
 
+const STATUS_LABELS: Record<string, string> = {
+  CONFIRMED: "Confirmada",
+  PENDING: "Pendiente",
+  CANCELLED: "Cancelada",
+  COMPLETED: "Completada",
+  NO_SHOW: "No asistió",
+};
+
 const STATUS_VARIANT: Record<string, "success" | "destructive" | "default" | "warning"> = {
   CONFIRMED: "success",
   PENDING: "warning",
@@ -39,28 +47,28 @@ export default async function ManageBookingPage({ params }: { params: Promise<{ 
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-xl font-bold">{booking.service.name}</h1>
-                <p className="text-sm text-muted-foreground">with {booking.staff.name}</p>
+                <p className="text-sm text-muted-foreground">con {booking.staff.name}</p>
               </div>
-              <Badge variant={STATUS_VARIANT[booking.status] ?? "default"}>{booking.status}</Badge>
+              <Badge variant={STATUS_VARIANT[booking.status] ?? "default"}>{STATUS_LABELS[booking.status] ?? booking.status}</Badge>
             </div>
 
             <div className="space-y-1 rounded-lg bg-secondary p-4 text-sm">
-              <Row label="Date" value={formatBusinessDate(booking.startsAt, business.timezone)} />
-              <Row label="Time" value={formatBusinessTime(booking.startsAt, business.timezone)} />
-              <Row label="Booked for" value={booking.customer.name} />
-              <Row label="Email" value={booking.customer.email} />
+              <Row label="Fecha" value={formatBusinessDate(booking.startsAt, business.timezone)} />
+              <Row label="Hora" value={formatBusinessTime(booking.startsAt, business.timezone)} />
+              <Row label="A nombre de" value={booking.customer.name} />
+              <Row label="Correo" value={booking.customer.email} />
             </div>
 
             {booking.status === "CANCELLED" && (
               <p className="text-sm text-muted-foreground">
-                This appointment was cancelled{booking.cancelReason ? `: “${booking.cancelReason}”` : "."}
+                Esta cita fue cancelada{booking.cancelReason ? `: “${booking.cancelReason}”` : "."}
               </p>
             )}
 
             {canCancel && !isPast ? (
               <CancelBookingButton token={token} />
             ) : canCancel && isPast ? (
-              <p className="text-sm text-muted-foreground">This appointment time has already passed.</p>
+              <p className="text-sm text-muted-foreground">La fecha de esta cita ya pasó.</p>
             ) : null}
           </CardContent>
         </Card>

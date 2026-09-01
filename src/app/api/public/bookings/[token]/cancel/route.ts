@@ -11,31 +11,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const body = await request.json().catch(() => ({}));
   const parsed = cancelBookingSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
   }
 
   const booking = await prisma.booking.findUnique({
     where: { manageToken: token },
     include: { service: true, customer: true, staff: true },
   });
-  if (!booking) return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+  if (!booking) return NextResponse.json({ error: "No encontramos la cita" }, { status: 404 });
   if (booking.status === "CANCELLED") {
-    return NextResponse.json({ error: "This appointment is already cancelled." }, { status: 400 });
+    return NextResponse.json({ error: "Esta cita ya está cancelada." }, { status: 400 });
   }
 
   const business = await getBusiness();
   const now = new Date();
 
   if (booking.startsAt < now) {
-    return NextResponse.json({ error: "This appointment has already passed." }, { status: 400 });
+    return NextResponse.json({ error: "La fecha de esta cita ya pasó." }, { status: 400 });
   }
 
   const cutoff = subHours(booking.startsAt, business.cancellationWindowHours);
   if (now > cutoff) {
-    const contact = business.contactPhone || business.contactEmail || "the business directly";
+    const contact = business.contactPhone || business.contactEmail || "el negocio directamente";
     return NextResponse.json(
       {
-        error: `This appointment is within the ${business.cancellationWindowHours}-hour cancellation window. Please contact ${contact} to cancel.`,
+        error: `Esta cita está dentro de la ventana de cancelación de ${business.cancellationWindowHours} horas. Comunícate con ${contact} para cancelarla.`,
       },
       { status: 400 }
     );

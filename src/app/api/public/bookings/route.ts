@@ -10,30 +10,30 @@ export async function POST(request: NextRequest) {
   const ip = clientIpFrom(request.headers);
   const limited = rateLimit(`create-booking:${ip}`, 8, 5 * 60 * 1000);
   if (!limited.allowed) {
-    return NextResponse.json({ error: "Too many requests. Please try again in a few minutes." }, { status: 429 });
+    return NextResponse.json({ error: "Demasiadas solicitudes. Intenta de nuevo en unos minutos." }, { status: 429 });
   }
 
   const body = await request.json().catch(() => null);
   const parsed = createBookingSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request" }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Solicitud inválida" }, { status: 400 });
   }
   const input = parsed.data;
 
   const business = await getBusiness();
   const service = await prisma.service.findUnique({ where: { id: input.serviceId } });
   if (!service || !service.active) {
-    return NextResponse.json({ error: "This service is no longer available." }, { status: 404 });
+    return NextResponse.json({ error: "Este servicio ya no está disponible." }, { status: 404 });
   }
 
   const eligible = await staffCanPerformService(input.staffId, input.serviceId);
   if (!eligible) {
-    return NextResponse.json({ error: "This staff member cannot perform this service." }, { status: 400 });
+    return NextResponse.json({ error: "Esta persona no realiza este servicio." }, { status: 400 });
   }
 
   const staff = await prisma.staff.findUnique({ where: { id: input.staffId } });
   if (!staff || !staff.active) {
-    return NextResponse.json({ error: "This staff member is not available." }, { status: 400 });
+    return NextResponse.json({ error: "Esta persona no está disponible." }, { status: 400 });
   }
 
   const requestedStart = new Date(input.startsAt);
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   const match = slots.find((s) => s.start === requestedStart.toISOString());
   if (!match) {
     return NextResponse.json(
-      { error: "That time is no longer available. Please choose another time." },
+      { error: "Ese horario ya no está disponible. Elige otro." },
       { status: 409 }
     );
   }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     // the real guarantee against double-booking.
     console.error("[bookings] insert failed, likely a slot race:", err);
     return NextResponse.json(
-      { error: "That time was just booked by someone else. Please choose another time." },
+      { error: "Alguien acaba de reservar ese horario. Elige otro." },
       { status: 409 }
     );
   }

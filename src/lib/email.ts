@@ -61,7 +61,7 @@ export async function sendBookingConfirmationEmail(ctx: BookingEmailContext) {
   const ics = buildIcsEvent({
     uid: `${ctx.manageUrl}`,
     title: `${ctx.serviceName} — ${ctx.businessName}`,
-    description: `Your appointment with ${ctx.staffName}.`,
+    description: `Tu cita con ${ctx.staffName}.`,
     location: ctx.location,
     start: ctx.start,
     end: ctx.end,
@@ -69,7 +69,7 @@ export async function sendBookingConfirmationEmail(ctx: BookingEmailContext) {
 
   await send({
     to: ctx.customerEmail,
-    subject: `Confirmed: ${ctx.serviceName} on ${ctx.dateLabel}`,
+    subject: `Confirmada: ${ctx.serviceName} el ${ctx.dateLabel}`,
     react: BookingConfirmationEmail({
       businessName: ctx.businessName,
       logoUrl: ctx.logoUrl,
@@ -81,7 +81,7 @@ export async function sendBookingConfirmationEmail(ctx: BookingEmailContext) {
       timeLabel: ctx.timeLabel,
       manageUrl: ctx.manageUrl,
     }),
-    attachments: [{ filename: "appointment.ics", content: Buffer.from(ics).toString("base64") }],
+    attachments: [{ filename: "cita.ics", content: Buffer.from(ics).toString("base64") }],
   });
 }
 
@@ -90,7 +90,7 @@ export async function sendBookingCancelledEmail(
 ) {
   await send({
     to: ctx.customerEmail,
-    subject: `Cancelled: ${ctx.serviceName} on ${ctx.dateLabel}`,
+    subject: `Cancelada: ${ctx.serviceName} el ${ctx.dateLabel}`,
     react: BookingCancelledEmail({
       businessName: ctx.businessName,
       logoUrl: ctx.logoUrl,
@@ -107,7 +107,7 @@ export async function sendBookingCancelledEmail(
 export async function sendBookingReminderEmail(ctx: BookingEmailContext) {
   await send({
     to: ctx.customerEmail,
-    subject: `Reminder: ${ctx.serviceName} tomorrow`,
+    subject: `Recordatorio: ${ctx.serviceName} mañana`,
     react: BookingReminderEmail({
       businessName: ctx.businessName,
       logoUrl: ctx.logoUrl,
@@ -127,7 +127,7 @@ export async function sendNewBookingNoticeEmail(
 ) {
   await send({
     to: ctx.ownerEmail,
-    subject: `New booking: ${ctx.customerName} — ${ctx.serviceName}`,
+    subject: `Nueva reserva: ${ctx.customerName} — ${ctx.serviceName}`,
     react: NewBookingNoticeEmail({
       businessName: ctx.businessName,
       logoUrl: ctx.logoUrl,
