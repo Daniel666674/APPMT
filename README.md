@@ -88,10 +88,18 @@ new project, no new database, no redeploy.
    `.env.example` for the full list. At minimum: `DATABASE_URL`,
    `DIRECT_URL`, `SESSION_SECRET`, `NEXT_PUBLIC_APP_URL` (your Vercel URL or
    custom domain), `CRON_SECRET`, and `SETUP_SECRET`.
-3. Deploy. The build runs `prisma generate && prisma migrate deploy`
-   automatically (`package.json` → `build` script) — tables and the
-   anti-double-booking constraint are created on every deploy with no
+3. Deploy. The build runs `prisma generate`, a migration-repair step, then
+   `prisma migrate deploy` (`package.json` → `build` script) — tables and
+   the anti-double-booking constraint are created on every deploy with no
    manual migration step.
+
+   The repair step (`prisma/repair/failed-migration.sql`) exists because a
+   migration that fails leaves a marker Prisma won't apply past (`P3009`),
+   which would otherwise require someone to run SQL against the production
+   database by hand before a fix could ever deploy. It names one specific
+   migration, only touches a record that never finished, and is a no-op on a
+   fresh database and on every later deploy. Delete it once every deployment
+   you run has moved past that migration.
 
 ### 3. Add a business — in the browser, no local machine needed
 
