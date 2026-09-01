@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { getBusiness } from "@/lib/business";
+import { getBusinessOrNull } from "@/lib/business";
 import { brandStyle } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
@@ -12,28 +12,20 @@ const inter = Inter({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const business = await getBusiness();
-    return {
-      title: `${business.name} — Book an appointment`,
-      description: business.heroSubheadline ?? `Book your next appointment with ${business.name} online.`,
-      icons: business.faviconUrl ? [{ url: business.faviconUrl }] : undefined,
-    };
-  } catch {
-    return { title: "Appointment Scheduler" };
-  }
+  const business = await getBusinessOrNull();
+  if (!business) return { title: "Appointment Scheduler" };
+  return {
+    title: `${business.name} — Book an appointment`,
+    description: business.heroSubheadline ?? `Book your next appointment with ${business.name} online.`,
+    icons: business.faviconUrl ? [{ url: business.faviconUrl }] : undefined,
+  };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let style: React.CSSProperties = {};
-  let themeMode = "light";
-  try {
-    const business = await getBusiness();
-    style = brandStyle(business);
-    themeMode = business.themeMode;
-  } catch {
-    // No business row yet (fresh install before seeding) — fall back to defaults.
-  }
+  // Null before setup has run — the app still renders, with default theming.
+  const business = await getBusinessOrNull();
+  const style: React.CSSProperties = business ? brandStyle(business) : {};
+  const themeMode = business?.themeMode ?? "light";
 
   return (
     <html
