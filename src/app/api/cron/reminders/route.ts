@@ -6,10 +6,16 @@ import { prisma } from "@/lib/db";
 import { sendBookingReminderEmail } from "@/lib/email";
 
 /**
- * Sends a reminder email for every confirmed booking starting 23–25 hours
- * from now that hasn't already gotten one. Meant to be hit by Vercel Cron
- * (see vercel.json) roughly once an hour — the 2-hour window keeps it
- * reliable even if a run is skipped or delayed.
+ * Sends a reminder email for every confirmed booking starting within the
+ * next 36 hours that hasn't already had one. Driven by Vercel Cron once a
+ * day (see vercel.json) — Vercel's Hobby plan only permits daily
+ * schedules, and a deployment is rejected outright if the schedule is more
+ * frequent than that. The 36-hour sweep (rather than a narrow 23–25h
+ * band) means every booking still gets exactly one reminder, roughly
+ * 12–36 hours ahead, even though the job only runs once a day.
+ *
+ * On a paid plan you can tighten this: set the schedule to hourly and
+ * narrow the window back down for more precise 24-hour reminders.
  */
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -22,14 +28,13 @@ export async function GET(request: NextRequest) {
 
   const business = await getBusiness();
   const now = new Date();
-  const windowStart = addHours(now, 23);
-  const windowEnd = addHours(now, 25);
+  const windowEnd = addHours(now, 36);
 
   const bookings = await prisma.booking.findMany({
     where: {
       status: "CONFIRMED",
       reminderSentAt: null,
-      startsAt: { gte: windowStart, lte: windowEnd },
+      startsAt: { gte: now, lte: windowEnd },
     },
     include: { service: true, staff: true, customer: true },
   });
