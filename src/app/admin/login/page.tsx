@@ -1,4 +1,4 @@
-import { getBusiness } from "@/lib/business";
+import { getBusinessOrNull } from "@/lib/business";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "./LoginForm";
 
@@ -8,7 +8,7 @@ export default async function AdminLoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  const business = await getBusiness().catch(() => null);
+  const business = await getBusinessOrNull();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-4">
