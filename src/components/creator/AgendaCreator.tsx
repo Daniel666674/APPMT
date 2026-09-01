@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Children, cloneElement, isValidElement, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, Copy, Loader2, ExternalLink, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -101,6 +101,30 @@ export function AgendaCreator({
   const [ownerPassword, setOwnerPassword] = useState("");
   const [listed, setListed] = useState(true);
   const [secret, setSecret] = useState("");
+  /**
+   * On /setup nobody is signed in, so the live URL check has to carry the
+   * setup key. Asking for it up front rather than on the last step is what
+   * makes that check work at all — otherwise it silently 401s through the
+   * whole wizard and only tells you the URL is taken after you submit.
+   */
+  const [secretOk, setSecretOk] = useState(mode !== "setup");
+  const [checkingSecret, setCheckingSecret] = useState(false);
+  const [secretError, setSecretError] = useState<string | null>(null);
+
+  async function verifySecret(e: React.FormEvent) {
+    e.preventDefault();
+    setCheckingSecret(true);
+    setSecretError(null);
+    try {
+      const res = await fetch(`/api/agenda-slug?value=prueba&secret=${encodeURIComponent(secret)}`);
+      if (res.ok) setSecretOk(true);
+      else setSecretError("La clave de instalación no coincide.");
+    } catch {
+      setSecretError("No pudimos conectar con el servidor.");
+    } finally {
+      setCheckingSecret(false);
+    }
+  }
 
   /**
    * Picking a sector re-seeds the palette, but only while the colors are
@@ -146,10 +170,14 @@ export function AgendaCreator({
   );
 
   useEffect(() => {
+    // Nothing to check until the wizard is actually open and a name has been
+    // typed — an empty name slugifies to a placeholder, and asking about it
+    // before the key is accepted just earns a 401.
+    if (!secretOk || !businessName.trim()) return;
     const value = effectiveSlug;
     const timer = setTimeout(() => void checkSlug(value, secret), 350);
     return () => clearTimeout(timer);
-  }, [effectiveSlug, secret, checkSlug]);
+  }, [effectiveSlug, secret, secretOk, businessName, checkSlug]);
 
   const previewName = businessName || industry.defaultBusinessName;
   const preview = {
@@ -179,7 +207,6 @@ export function AgendaCreator({
     if (step === 3 && openDays.length === 0) return "Escoge al menos un día de atención.";
     if (step === 3 && openTo <= openFrom) return "La hora de cierre debe ser posterior a la de apertura.";
     if (step === 4) {
-      if (mode === "setup" && !secret.trim()) return "Escribe la clave de instalación.";
       if (createOwnerUser && !ownerEmail.includes("@"))
         return isFirstRun ? "Escribe tu correo." : "Escribe el correo del cliente.";
       if (createOwnerUser && ownerPassword.length < 8) return "La contraseña debe tener mínimo 8 caracteres.";
@@ -239,6 +266,37 @@ export function AgendaCreator({
   }
 
   if (created) return <CreatedPanel created={created} mode={mode} />;
+
+  if (!secretOk) {
+    return (
+      <form onSubmit={verifySecret} className="mx-auto max-w-md space-y-4 py-4">
+        <div>
+          <h2 className="text-lg font-bold">Clave de instalación</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Es el valor de <code className="rounded bg-secondary px-1 py-0.5 text-xs">SETUP_SECRET</code> en
+            las variables de entorno de este despliegue, en Vercel.
+          </p>
+        </div>
+        <Input
+          value={secret}
+          onChange={(e) => setSecret(e.target.value)}
+          className="font-mono"
+          autoFocus
+          required
+          aria-label="Clave de instalación"
+        />
+        {secretError ? (
+          <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {secretError}
+          </p>
+        ) : null}
+        <Button type="submit" variant="brand" className="w-full" disabled={checkingSecret || !secret.trim()}>
+          {checkingSecret ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
+          {checkingSecret ? "Revisando…" : "Continuar"}
+        </Button>
+      </form>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -581,11 +639,7 @@ export function AgendaCreator({
               description="La portada del sitio. Déjalo encendido para las demos que quieres mostrar y apágalo para la agenda de un cliente real."
             />
 
-            {mode === "setup" ? (
-              <Field label="Clave de instalación" hint="Es el valor de SETUP_SECRET en este despliegue.">
-                <Input value={secret} onChange={(e) => setSecret(e.target.value)} className="font-mono" />
-              </Field>
-            ) : null}
+
           </Section>
         ) : null}
 
@@ -670,11 +724,22 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   );
 }
 
+/**
+ * Ties the label to its control. Without htmlFor the label is just text
+ * sitting above an input: clicking it does nothing and a screen reader
+ * announces an unnamed field. When the field wraps a single control that
+ * has no id of its own, it gets one here.
+ */
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  const generatedId = useId();
+  const only = Children.toArray(children);
+  const single = only.length === 1 && isValidElement(only[0]) ? (only[0] as React.ReactElement<{ id?: string }>) : null;
+  const controlId = single ? (single.props.id ?? generatedId) : undefined;
+
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
+      <Label htmlFor={controlId}>{label}</Label>
+      {single && !single.props.id ? cloneElement(single, { id: controlId }) : children}
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
