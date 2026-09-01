@@ -74,8 +74,14 @@ console.log("\n── The superadmin ──────────────�
   check("  …so there is exactly one", (await prisma.user.count()) === 1);
 }
 {
+  // It stops offering the form, but it does not bounce: whoever lands here a
+  // second time usually does so because they lost the password, so the page
+  // says what happened and points at /recuperar.
   const r = await fetch(`${BASE}/setup`, { redirect: "manual" });
-  check("/setup steps aside once an account exists", r.status === 307 || r.status === 302, `status=${r.status}`);
+  const html = await r.text();
+  check("/setup stops offering the form once an account exists", r.status === 200 && !/Clave de instalaci/.test(html), `status=${r.status}`);
+  check("  …explains why instead of bouncing", /ya tiene su cuenta/i.test(html));
+  check("  …and points at recovery", /\/recuperar/.test(html));
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);
