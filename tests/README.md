@@ -12,6 +12,10 @@ prove it against a real running server and a real database — no mocks.
   server action (create/update/delete for staff, services, appointments,
   availability and settings) is invoked for real with **another business's
   ids**, then the database is checked to confirm nothing moved.
+- `account.mjs` — the signed-in person's own account. Changing the platform
+  admin's password changes the login behind every agenda, so this checks the
+  current password is genuinely required, the new one takes effect and the
+  old one stops working, and that an email already in use is refused.
 - `platform-admin.mjs` — the reseller privilege boundary. Platform access
   reaches every agenda, so this checks a client login cannot list, enter,
   create or delete another one — including with a **forged cookie** that
@@ -41,6 +45,7 @@ npm start -- -p 3100 &
 TEST_URL=http://localhost:3100 node tests/tenant-isolation.mjs
 TEST_URL=http://localhost:3100 node tests/tenant-isolation-actions.mjs
 TEST_URL=http://localhost:3100 node tests/platform-admin.mjs
+TEST_URL=http://localhost:3100 node tests/account.mjs
 ```
 
 Both exit non-zero if anything fails. They clean up after themselves, so

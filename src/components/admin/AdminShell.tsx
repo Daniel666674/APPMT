@@ -12,6 +12,7 @@ import {
   Scissors,
   Settings,
   Store,
+  UserCog,
   Users,
   UserSquare2,
   X,
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/admin/staff", label: "Equipo", icon: UserSquare2 },
   { href: "/admin/customers", label: "Clientes", icon: Users },
   { href: "/admin/settings", label: "Configuración", icon: Settings },
+  { href: "/admin/cuenta", label: "Mi cuenta", icon: UserCog },
 ];
 
 /** Only a platform admin sees this — it reaches across every business. */

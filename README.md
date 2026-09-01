@@ -255,7 +255,7 @@ to their name on the Staff page).
 
 Because one deployment now holds every client's data, "business A cannot see
 or touch business B" is the property that must never regress. `tests/` backs
-it with 86 assertions against a real build and a real database — cross-tenant
+it with 102 assertions against a real build and a real database — cross-tenant
 ids on every public API, cross-tenant slugs on every public page, every admin
 server action invoked for real with another business's ids, and every
 reseller-level route and action attempted from a client login and from a
@@ -265,6 +265,7 @@ forged platform cookie — then the database checked to confirm nothing moved.
 node tests/tenant-isolation.mjs          # public surface
 node tests/tenant-isolation-actions.mjs  # admin server actions
 node tests/platform-admin.mjs            # reseller privilege boundary
+node tests/account.mjs                   # your own login and password
 ```
 
 See `tests/README.md` for the setup they need. Run them after any change to
@@ -272,9 +273,10 @@ a query, a route, or the session.
 
 ## Known limitations / good next additions
 
-- One admin account per business (no multi-user staff logins yet, no in-app
-  password reset — set the password carefully at creation, or change it
-  later via Prisma Studio).
+- One admin account per business (no multi-user staff logins yet). You can
+  change your own email and password at **/admin/cuenta**, but there is no
+  "forgot my password" email — a locked-out client's password is reset by
+  you, from the database.
 - Adding a business requires the platform account or `SETUP_SECRET`; there's
   no self-service signup, which is deliberate for a reseller product but
   means you onboard each client yourself.
@@ -316,6 +318,7 @@ src/app/[slug]/               One business's public booking site
 src/app/manage/[token]/       No-login cancel page (business comes from the booking)
 src/app/setup/                First-run creator (SETUP_SECRET gated)
 src/app/admin/(dashboard)/negocios/   Console: every agenda, and the creator
+src/app/admin/(dashboard)/cuenta/     Your own login: name, email, password
 src/app/admin/(dashboard)/    Authenticated admin dashboard, scoped to one business
 src/app/api/public/           Booking creation, availability, cancellation
 src/app/api/cron/reminders/   Daily email reminder job, all businesses (see vercel.json)

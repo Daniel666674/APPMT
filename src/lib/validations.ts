@@ -135,6 +135,23 @@ export const createAgendaSchema = z.object({
 });
 export type CreateAgendaInput = z.infer<typeof createAgendaSchema>;
 
+/** The signed-in person's own profile — not the business's. */
+export const accountProfileSchema = z.object({
+  name: z.string().trim().min(2, "Escribe tu nombre").max(120),
+  email: emailSchema,
+});
+
+export const accountPasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Escribe tu contraseña actual"),
+    newPassword: z.string().min(8, "La nueva contraseña debe tener mínimo 8 caracteres").max(200),
+    confirmPassword: z.string().min(1, "Repite la nueva contraseña"),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
+
 export const businessSettingsSchema = z.object({
   name: z.string().trim().min(1).max(120),
   slug: z
