@@ -16,6 +16,11 @@ prove it against a real running server and a real database — no mocks.
   admin's password changes the login behind every agenda, so this checks the
   current password is genuinely required, the new one takes effect and the
   old one stops working, and that an email already in use is refused.
+- `recovery.mjs` — `/recuperar`, the one route that sets a password without
+  knowing the old one. Checks the SETUP_SECRET gate reveals and changes
+  nothing when it fails, that a reset actually works, that it restores
+  platform access only when nobody holds it, and that guessing the secret
+  gets rate-limited. Needs `SETUP_SECRET` set to match the server.
 - `platform-admin.mjs` — the reseller privilege boundary. Platform access
   reaches every agenda, so this checks a client login cannot list, enter,
   create or delete another one — including with a **forged cookie** that
@@ -46,6 +51,7 @@ TEST_URL=http://localhost:3100 node tests/tenant-isolation.mjs
 TEST_URL=http://localhost:3100 node tests/tenant-isolation-actions.mjs
 TEST_URL=http://localhost:3100 node tests/platform-admin.mjs
 TEST_URL=http://localhost:3100 node tests/account.mjs
+TEST_URL=http://localhost:3100 SETUP_SECRET=… node tests/recovery.mjs
 ```
 
 Both exit non-zero if anything fails. They clean up after themselves, so

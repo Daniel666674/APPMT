@@ -63,7 +63,15 @@ export function slugify(input: string) {
  * Slugs that would collide with the app's own top-level routes. A business
  * can't claim one of these, or its booking page would be unreachable.
  */
-export const RESERVED_SLUGS = new Set(["admin", "api", "setup", "manage", "_next", "favicon.ico"]);
+export const RESERVED_SLUGS = new Set([
+  "admin",
+  "api",
+  "setup",
+  "recuperar",
+  "manage",
+  "_next",
+  "favicon.ico",
+]);
 
 /** Finds a free slug, appending -2, -3, … if the base is taken or reserved. */
 export async function findAvailableSlug(base: string) {
