@@ -26,6 +26,13 @@ dashboard with no code changes.
 - **Auth** — simple, self-contained session auth (bcrypt + signed JWT
   cookies) for the admin dashboard. No third-party auth service required.
 
+## Language
+
+The entire product ships in **Spanish** — public booking flow, admin
+dashboard, validation messages, date/currency formatting (`es-CO`), and all
+transactional emails. Copy lives inline in the components; there is no i18n
+layer, so translating to another language means editing the strings.
+
 ## Tech stack
 
 Next.js 16 (App Router) · TypeScript · Prisma · PostgreSQL · Tailwind CSS v4
@@ -72,35 +79,41 @@ This is the repeatable process for selling/deploying this to a new business.
    anti-double-booking constraint are created on every deploy with no
    manual migration step.
 
-### 3. Create the first login — no local machine needed
+### 3. Run setup — in the browser, no local machine needed
 
-The app has no `Business`/`User` row until this runs once. Rather than
-requiring Node.js on your machine, visit this URL in a browser (fill in your
-own values):
+The app has no `Business`/`User` row until this runs once. Open
+**`https://your-app.vercel.app/setup`** and fill in the form:
 
-```
-https://your-app.vercel.app/api/setup?secret=YOUR_SETUP_SECRET&email=owner@theirbusiness.com&password=a-strong-temp-password&business=Their%20Business%20Name
-```
+- **Sector del negocio** — picks an industry preset (see below).
+- **Nombre del negocio** — leave blank to use the preset's example name.
+- **Correo / contraseña** — becomes the client's admin login.
+- **Clave de instalación** — the `SETUP_SECRET` you set in step 2.
 
-- `secret` must match the `SETUP_SECRET` you set in step 2.
-- `email` / `password` become the client's first admin login.
-- `business` (optional) seeds the real business name; omitted, it falls
-  back to a placeholder you can rename later.
-
-This also creates a starter set of demo services/staff/hours so the
-dashboard isn't empty on first login — replace them with the real thing in
-step 5. The link **permanently disables itself** the moment it succeeds
-(visiting it again just returns "already set up"), so it's safe to leave
+Submitting creates the business, the admin user, and a full set of demo
+services, staff and working hours for that industry. The page
+**permanently disables itself** once it succeeds, so it's safe to leave
 deployed.
 
-Prefer a terminal? `npm run db:seed` (from a local checkout, with
-`DATABASE_URL`/`DIRECT_URL` pointed at production) does the same thing —
-see `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD` in `.env.example`.
+Automating instead? `/api/setup` also accepts GET with query params
+(`secret`, `email`, `password`, `business`, `industry`), and
+`npm run db:seed` does the same from a local checkout.
 
-Tell the client to log in and change their password... there's no
-self-service password change yet (see **Known limitations** below) — for now,
-re-run the seed's `bcrypt.hash` step manually or update the `User` row via
-Prisma Studio (`npm run db:studio`) if they need a reset.
+### Industry presets
+
+`src/lib/industries.ts` ships ten verticals, each with its own colors,
+hero copy, staff and realistic services priced in COP:
+
+barbería · peluquería y salón de belleza · spa y estética · clínica dental
+· consultorio médico · salón de uñas · estudio de tatuajes · entrenamiento
+personal · veterinaria · consultoría
+
+This exists to make selling easier: spin up a separate deployment per
+vertical and each one opens as a believable demo of that business rather
+than placeholder text. Add or edit presets by editing that one file.
+
+> **Note on passwords:** there's no self-service password reset yet (see
+> **Known limitations**). Pick the client's password carefully at setup, or
+> update the `User` row later via Prisma Studio (`npm run db:studio`).
 
 ### 4. Turn on email
 
