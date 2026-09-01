@@ -89,9 +89,13 @@ enum Role {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
+
+  /// Null for the platform admin: whoever runs the deployment belongs to no
+  /// single business, they reach all of them. A business owner's login always
+  /// has one, and that is what pins them to their own agenda.
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   email        String   @unique
   passwordHash String

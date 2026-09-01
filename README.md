@@ -115,18 +115,28 @@ new project, no new database, no redeploy.
    fresh database and on every later deploy. Delete it once every deployment
    you run has moved past that migration.
 
-### 3. Create your first agenda
+### 3. Create your account, then the library
 
-Open **`https://your-app.vercel.app/setup`**, which asks for `SETUP_SECRET`
-and walks five steps — sector, business, brand, hours, access — with a live
-preview of the booking page beside the form. It ends with the shareable URL.
+**`/setup`** asks for three things — your email, your password, and
+`SETUP_SECRET` — and creates the **superadmin**. It never asks about a
+business, because that account belongs to none: it reaches all of them.
+Once it exists the page steps aside; a forgotten password goes to
+`/recuperar` instead.
 
-The account created here is the **platform admin**: the one login that
-reaches every agenda on the deployment. On an empty deployment the creator
-requires it — an agenda with no login would leave nobody able to sign in —
-so the first run asks for *your* email and password rather than offering the
-demo option. After this you never need `/setup` again: create the rest from
-**/admin/negocios → Nueva agenda**, signed in.
+Then sign in at **`/admin/login`**. With no agenda open you land straight on
+the console, where **"Crear las N demos que faltan"** builds one agenda per
+sector in a single click — nothing to type.
+
+### The three kinds of URL
+
+| | |
+|---|---|
+| **You** | `/admin` — one login, reaches every agenda |
+| **A prospect** | `/su-negocio` — the demo's own page, no login, nothing to sign up for |
+| **A client who bought** | `/su-negocio/admin` — their door, beside their booking page |
+
+A client's login is scoped to their agenda: they see their own bookings and
+no trace of any other business.
 
 #### Demos vs. clients
 

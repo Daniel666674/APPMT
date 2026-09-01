@@ -1,10 +1,9 @@
 /**
- * First run on an empty deployment.
+ * First run on an empty deployment, under the current model.
  *
- * The trap this guards against: creating the first agenda as a "demo" with
- * no login, which leaves the deployment with zero accounts. Nobody could
- * sign in, and /recuperar would only point back at /setup — a loop with no
- * way out except SQL. So the first agenda must carry the superadmin.
+ * The superadmin belongs to no business: /setup asks only for an email, a
+ * password and the setup key, and never for a sector or a brand. Agendas
+ * come afterwards and carry no login of their own unless one is asked for.
  *
  * Needs its own empty database. Prerequisites: see tests/README.md.
  */
@@ -26,116 +25,57 @@ function check(name, ok, detail = "") {
   else { fail++; console.log(`  FAIL  ${name} ${detail}`); }
 }
 
-const users = await prisma.user.count();
-const businesses = await prisma.business.count();
-if (users > 0 || businesses > 0) {
-  console.error(`This suite needs an empty database (found ${users} users, ${businesses} businesses).`);
+if ((await prisma.user.count()) > 0 || (await prisma.business.count()) > 0) {
+  console.error("This suite needs an empty database.");
   process.exit(2);
 }
 
-const agenda = (over = {}) => ({
-  industryKey: "barberia",
-  businessName: "Barbería Primera",
-  slug: "barberia-primera",
-  primaryColor: "#1f2937",
-  accentColor: "#d97706",
-  fontFamily: "inter",
-  cornerStyle: "soft",
-  themeMode: "light",
-  openDays: [1, 2, 3, 4, 5],
-  openFromMinute: 540,
-  openToMinute: 1080,
-  listed: true,
-  createOwnerUser: false,
-  ...over,
-});
-const create = (over) =>
-  fetch(`${BASE}/api/agendas`, {
+const setup = (body) =>
+  fetch(`${BASE}/api/setup`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ secret: SECRET, agenda: agenda(over) }),
+    headers: { "content-type": "application/json", "x-forwarded-for": `198.51.100.${Math.floor(Math.random()*200)+1}` },
+    body: JSON.stringify(body),
   });
 
-console.log("\n── An empty deployment ─────────────────────────────────");
+console.log("\n── /setup asks for nothing but an account ──────────────");
 {
   const r = await fetch(`${BASE}/setup`);
   const html = await r.text();
-  check("/setup frames itself as first run", html.includes("Pon en marcha tu herramienta"), `status=${r.status}`);
-  check("  …and says this creates your account", html.includes("tu cuenta de administrador"));
+  check("the page loads", r.status === 200, `status=${r.status}`);
+  check("  …and never asks for a sector or a brand", !/Sector del negocio|Identidad de marca/.test(html));
 }
 {
-  const r = await fetch(`${BASE}/`);
-  const html = await r.text();
-  check("the library says there is nothing yet", html.includes("Todavía no hay agendas"), `status=${r.status}`);
-}
-
-console.log("\n── The trap: a first agenda with no login ──────────────");
-{
-  const r = await create({ createOwnerUser: false });
-  const body = await r.json();
-  check("creating one without an account is refused", r.status === 409, `status=${r.status}`);
-  check("  …and says why", /cuenta de administrador/i.test(body.error ?? ""), body.error);
-  check("  …and no business was created", (await prisma.business.count()) === 0);
-  check("  …leaving nobody locked out", (await prisma.user.count()) === 0);
+  const r = await setup({ secret: "mala", email: "x@y.com", password: "unaclave12345" });
+  check("a wrong key is refused", r.status === 401, `status=${r.status}`);
+  check("  …and creates nothing", (await prisma.user.count()) === 0);
 }
 {
-  // Same refusal when the flag is simply absent rather than false.
-  const a = agenda();
-  delete a.createOwnerUser;
-  const r = await fetch(`${BASE}/api/agendas`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ secret: SECRET, agenda: a }),
-  });
-  check("omitting the flag is refused too", r.status === 409, `status=${r.status}`);
+  const r = await setup({ secret: SECRET, email: "no-es-correo", password: "unaclave12345" });
+  check("an invalid email is refused", r.status === 400, `status=${r.status}`);
+}
+{
+  const r = await setup({ secret: SECRET, email: "daniel@blackscale.co", password: "corta" });
+  check("a short password is refused", r.status === 400, `status=${r.status}`);
 }
 
-console.log("\n── Creating it properly ────────────────────────────────");
+console.log("\n── The superadmin ──────────────────────────────────────");
 {
-  const r = await create({
-    createOwnerUser: true,
-    ownerEmail: "daniel@blackscale.co",
-    ownerPassword: "MiClaveSegura123",
-  });
-  const body = await r.json();
-  check("with an account it succeeds", r.status === 201, `status=${r.status} ${JSON.stringify(body)}`);
-
+  const r = await setup({ secret: SECRET, email: "daniel@blackscale.co", password: "MiClave2026" });
+  check("the account is created", r.status === 201, `status=${r.status}`);
   const user = await prisma.user.findUnique({ where: { email: "daniel@blackscale.co" } });
-  check("  …the account exists", Boolean(user));
-  check("  …it is the superadmin", user?.isPlatformAdmin === true);
-  check("  …the password works", await bcrypt.compare("MiClaveSegura123", user.passwordHash));
-
-  const page = await fetch(`${BASE}/barberia-primera`);
-  check("  …and the agenda is live on its URL", page.status === 200, `status=${page.status}`);
-}
-
-console.log("\n── After that, demos need no login ─────────────────────");
-{
-  const r = await create({
-    businessName: "Spa Segunda",
-    slug: "spa-segunda",
-    industryKey: "spa",
-    createOwnerUser: false,
-  });
-  const body = await r.json();
-  check("a second agenda without a login is allowed", r.status === 201, `status=${r.status} ${JSON.stringify(body)}`);
-
-  const made = await prisma.business.findUnique({
-    where: { id: body.businessId },
-    include: { _count: { select: { users: true, services: true, staff: true } } },
-  });
-  check("  …it carries no user of its own", made._count.users === 0);
-  check("  …but has services and a team to edit", made._count.services > 0 && made._count.staff > 0);
-
-  const page = await fetch(`${BASE}/spa-segunda`);
-  check("  …and a lead can just open its URL", page.status === 200, `status=${page.status}`);
-
-  check("  …with still exactly one account on the deployment", (await prisma.user.count()) === 1);
+  check("  …it runs the platform", user?.isPlatformAdmin === true);
+  check("  …and belongs to NO business", user?.businessId === null);
+  check("  …with a working password", await bcrypt.compare("MiClave2026", user.passwordHash));
+  check("  …and no agenda was invented for it", (await prisma.business.count()) === 0);
 }
 {
-  const r = await fetch(`${BASE}/`);
-  const html = await r.text();
-  check("both agendas show in the library", html.includes("Barbería Primera") && html.includes("Spa Segunda"));
+  const r = await setup({ secret: SECRET, email: "otro@blackscale.co", password: "OtraClave2026" });
+  check("a second account is refused", r.status === 409, `status=${r.status}`);
+  check("  …so there is exactly one", (await prisma.user.count()) === 1);
+}
+{
+  const r = await fetch(`${BASE}/setup`, { redirect: "manual" });
+  check("/setup steps aside once an account exists", r.status === 307 || r.status === 302, `status=${r.status}`);
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);

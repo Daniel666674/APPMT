@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { INDUSTRIES } from "../src/lib/industries";
 import { ProvisionError, provisionBusiness } from "../src/lib/provision";
 
@@ -8,63 +9,52 @@ const OWNER_EMAIL = process.env.SEED_OWNER_EMAIL ?? "owner@example.com";
 const OWNER_PASSWORD = process.env.SEED_OWNER_PASSWORD ?? "changeme123";
 
 /**
- * Seeds one demo agenda per industry, each on its own URL, plus the single
- * platform-admin account that runs all of them.
+ * Fills a local database the way a real deployment ends up: one superadmin
+ * account that belongs to no business, and one demo agenda per sector, none
+ * of which carries a login of its own.
  *
- * The demos deliberately carry no login of their own. One account reaches
- * every agenda from /admin/negocios, so there is one email and one password
- * to remember no matter how many demos exist — and each demo's services,
- * prices, staff and hours stay fully editable from that account.
+ * That is the whole model in one script — the superadmin reaches every
+ * agenda, and a prospect just opens a demo's URL.
  *
- * Re-running is safe: it only creates agendas whose slug is still free.
+ * Re-running is safe: it only creates what is missing.
  */
 async function main() {
-  const created: { name: string; slug: string }[] = [];
-  let skipped = 0;
-
-  for (const [index, industry] of INDUSTRIES.entries()) {
-    const exists = await prisma.business.findFirst({
-      where: { name: industry.defaultBusinessName },
-      select: { id: true },
+  let admin = await prisma.user.findFirst({ where: { isPlatformAdmin: true } });
+  if (!admin) {
+    admin = await prisma.user.create({
+      data: {
+        email: OWNER_EMAIL,
+        passwordHash: await bcrypt.hash(OWNER_PASSWORD, 12),
+        name: "Administrador",
+        role: "OWNER",
+        isPlatformAdmin: true,
+        businessId: null,
+      },
     });
-    if (exists) {
-      skipped += 1;
-      continue;
-    }
+  }
 
+  const existing = await prisma.business.findMany({ select: { name: true } });
+  const taken = new Set(existing.map((b) => b.name.trim().toLowerCase()));
+
+  const created: string[] = [];
+  for (const industry of INDUSTRIES) {
+    if (taken.has(industry.defaultBusinessName.trim().toLowerCase())) continue;
     try {
-      // The first agenda carries the platform account; the rest carry none.
-      const isFirst = index === 0;
       const result = await provisionBusiness(prisma, {
         industryKey: industry.key,
-        createOwnerUser: isFirst,
-        ownerEmail: isFirst ? OWNER_EMAIL : undefined,
-        ownerPassword: isFirst ? OWNER_PASSWORD : undefined,
+        createOwnerUser: false,
       });
-      created.push({ name: result.businessName, slug: result.slug });
+      created.push(`/${result.slug}`);
     } catch (err) {
-      if (err instanceof ProvisionError) {
-        skipped += 1;
-        continue;
-      }
+      if (err instanceof ProvisionError) continue;
       throw err;
     }
   }
 
-  if (!created.length) {
-    console.log("\nNothing to do — every demo agenda already exists.\n");
-  } else {
-    console.log("\nSeed complete.\n");
-    for (const business of created) {
-      console.log(`  /${business.slug.padEnd(28)} ${business.name}`);
-    }
-    if (skipped) console.log(`\n  ${skipped} already existed and were skipped.`);
-  }
-
-  const admin = await prisma.user.findFirst({ where: { isPlatformAdmin: true } });
-  console.log(`\nOne login runs all of them: ${admin?.email ?? OWNER_EMAIL} / ${OWNER_PASSWORD}`);
-  console.log("Sign in at /admin, then open Negocios to switch between agendas.");
-  console.log("Change this password before going anywhere near production.\n");
+  console.log(`\nSeed complete. ${created.length} agenda(s) created.\n`);
+  for (const slug of created) console.log(`  ${slug}`);
+  console.log(`\nOne login runs all of them: ${admin.email} / ${OWNER_PASSWORD}`);
+  console.log("Sign in at /admin/login. Change this password before production.\n");
 }
 
 main()

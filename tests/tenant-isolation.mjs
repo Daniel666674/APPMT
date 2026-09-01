@@ -42,7 +42,7 @@ const load = async (b) => ({
   staff: await prisma.staff.findFirst({ where: { businessId: b.id, active: true } }),
   booking: await prisma.booking.findFirst({ where: { businessId: b.id } }),
   customer: await prisma.customer.findFirst({ where: { businessId: b.id } }),
-  user: await prisma.user.findFirst({ where: { businessId: b.id } }),
+  user: await prisma.user.findFirst({ where: { isPlatformAdmin: true } }),
 });
 const a = await load(A), b = await load(B);
 console.log(`\nA = ${A.name} (/${A.slug})\nB = ${B.name} (/${B.slug})\n`);
@@ -210,9 +210,15 @@ const asA = (url) => fetch(`${BASE}${url}`, { headers: { cookie }, redirect: "ma
 }
 
 console.log("\n── Cross-tenant totals ─────────────────────────────────");
-for (const model of ["staff", "service", "customer", "booking", "timeOff", "user"]) {
+for (const model of ["staff", "service", "customer", "booking", "timeOff"]) {
   const orphans = await prisma[model].count({ where: { businessId: null } }).catch(() => 0);
   check(`every ${model} row carries a businessId`, orphans === 0, `${orphans} orphans`);
+}
+{
+  // Users are the one exception, and only in one direction: the platform
+  // admin belongs to no business, every other login must belong to one.
+  const looseOwners = await prisma.user.count({ where: { businessId: null, isPlatformAdmin: false } });
+  check("every non-platform login belongs to a business", looseOwners === 0, `${looseOwners} sueltos`);
 }
 
 console.log(`\n${pass} passed, ${fail} failed\n`);

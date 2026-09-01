@@ -46,7 +46,7 @@ const grab = async (b) => ({
   service: await prisma.service.findFirst({ where: { businessId: b.id } }),
   staff: await prisma.staff.findFirst({ where: { businessId: b.id } }),
   booking: await prisma.booking.findFirst({ where: { businessId: b.id } }),
-  user: await prisma.user.findFirst({ where: { businessId: b.id } }),
+  user: await prisma.user.findFirst({ where: { isPlatformAdmin: true } }),
 });
 const a = await grab(A), bb = await grab(B);
 

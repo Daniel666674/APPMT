@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireBusinessSession } from "@/lib/auth";
+import { getAdminContext } from "@/lib/auth";
 import { countBusinesses } from "@/lib/business";
 import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  * changing its password is not a per-business action.
  */
 export default async function CuentaPage() {
-  const { session, business, isPlatformAdmin } = await requireBusinessSession();
+  const { session, business, isPlatformAdmin } = await getAdminContext();
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
@@ -47,7 +47,7 @@ export default async function CuentaPage() {
           <CardDescription>
             {isPlatformAdmin
               ? `Con esta cuenta entras a las ${agendas} agendas de este despliegue. Es el único correo y la única contraseña que necesitas.`
-              : `Esta cuenta administra «${business.name}» y solo esa agenda.`}
+              : `Esta cuenta administra «${business?.name ?? "tu agenda"}» y solo esa agenda.`}
           </CardDescription>
         </CardHeader>
         <CardContent>

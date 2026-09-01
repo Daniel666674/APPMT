@@ -43,8 +43,8 @@ export function AdminShell({
   agendaCount = 0,
   children,
 }: {
-  businessName: string;
-  businessSlug: string;
+  businessName: string | null;
+  businessSlug: string | null;
   logoUrl?: string | null;
   userName: string;
   isPlatformAdmin?: boolean;
@@ -77,12 +77,14 @@ export function AdminShell({
               </span>
             ) : null}
           </Link>
-          <p className="mt-3 px-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Editando: {businessName}
-          </p>
+          {businessName ? (
+            <p className="mt-3 px-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Editando: {businessName}
+            </p>
+          ) : null}
         </>
       ) : null}
-      {NAV_ITEMS.map((item) => {
+      {(businessSlug ? NAV_ITEMS : []).map((item) => {
         const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         const Icon = item.icon;
         return (
@@ -104,22 +106,24 @@ export function AdminShell({
     <div className="flex min-h-screen">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card py-6 md:flex">
         <div className="mb-6 flex items-center gap-2 px-4">
-          {logoUrl ? (
+          {logoUrl && businessName ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt={businessName} className="h-8 w-auto object-contain" />
           ) : (
-            <span className="truncate text-lg font-bold text-brand">{businessName}</span>
+            <span className="truncate text-lg font-bold text-brand">{businessName ?? "Mis agendas"}</span>
           )}
         </div>
         {nav}
         <div className="mt-auto space-y-2 px-4 pt-6">
-          <Link
-            href={`/${businessSlug}`}
-            target="_blank"
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <ExternalLink className="h-3.5 w-3.5" /> Ver mi página de reservas
-          </Link>
+          {businessSlug ? (
+            <Link
+              href={`/${businessSlug}`}
+              target="_blank"
+              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3.5 w-3.5" /> Ver esta página de reservas
+            </Link>
+          ) : null}
           <p className="truncate text-xs text-muted-foreground">Sesión de {userName}</p>
           <form action={logout}>
             <Button type="submit" variant="outline" size="sm" className="w-full">

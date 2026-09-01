@@ -163,18 +163,16 @@ export async function provisionBusiness(
   }
 
   if (wantsOwner) {
-    const passwordHash = await bcrypt.hash(opts.ownerPassword!, 12);
-    // Whoever creates the very first account runs the deployment, so they get
-    // platform access. Every later account is scoped to its own business.
-    const isFirstUserEver = (await prisma.user.count()) === 0;
+    // A business owner. Platform access is never granted here — that
+    // account is created once, at /setup, and belongs to no business.
     await prisma.user.create({
       data: {
         businessId,
         email: opts.ownerEmail!,
-        passwordHash,
+        passwordHash: await bcrypt.hash(opts.ownerPassword!, 12),
         name: "Propietario",
         role: "OWNER",
-        isPlatformAdmin: isFirstUserEver,
+        isPlatformAdmin: false,
       },
     });
   }

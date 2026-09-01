@@ -16,10 +16,10 @@ prove it against a real running server and a real database — no mocks.
   admin's password changes the login behind every agenda, so this checks the
   current password is genuinely required, the new one takes effect and the
   old one stops working, and that an email already in use is refused.
-- `first-run.mjs` — the very first agenda on an empty deployment. It must
-  create the superadmin account: making it a login-less demo would leave the
-  deployment with zero accounts and no way in. **Needs its own empty
-  database**, so run it against a scratch one, not the seeded one.
+- `first-run.mjs` — `/setup` on an empty deployment. Checks it asks for
+  nothing but an account, that the account it creates runs the platform and
+  **belongs to no business**, that no agenda is invented for it, and that the
+  page steps aside once one exists. **Needs its own empty database.**
 - `recovery.mjs` — `/recuperar`, the one route that sets a password without
   knowing the old one. Checks the SETUP_SECRET gate reveals and changes
   nothing when it fails, that a reset actually works, that it restores

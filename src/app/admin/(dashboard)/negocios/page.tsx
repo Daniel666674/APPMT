@@ -117,7 +117,7 @@ function Group({
   title: string;
   hint: string;
   businesses: Row[];
-  activeId: string;
+  activeId: string | null;
 }) {
   if (!businesses.length) return null;
   return (

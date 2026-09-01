@@ -21,12 +21,12 @@ function getSecretKey() {
 export interface SessionPayload {
   userId: string;
   /**
-   * The business this session is currently managing. For an ordinary client
-   * login this is their own business and never changes. A platform admin can
-   * point it at any business (see switchBusiness), which is what lets one
-   * login run every agenda on the deployment.
+   * The business this session is currently managing. A business owner's
+   * login always has one and it never changes. The platform admin starts
+   * with none — they belong to no business — and points it at whichever
+   * agenda they open from the console.
    */
-  businessId: string;
+  businessId: string | null;
   email: string;
   name: string;
   role: "OWNER" | "STAFF";
@@ -55,14 +55,14 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     const { payload } = await jwtVerify(token, getSecretKey());
     if (
       typeof payload.userId === "string" &&
-      typeof payload.businessId === "string" &&
+      (typeof payload.businessId === "string" || payload.businessId === null) &&
       typeof payload.email === "string" &&
       typeof payload.name === "string" &&
       (payload.role === "OWNER" || payload.role === "STAFF")
     ) {
       return {
         userId: payload.userId,
-        businessId: payload.businessId,
+        businessId: (payload.businessId as string | null) ?? null,
         email: payload.email,
         name: payload.name,
         role: payload.role,
@@ -114,33 +114,71 @@ export async function requireSession(): Promise<SessionPayload> {
  */
 export async function requireBusinessSession() {
   const session = await requireSession();
-  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
-  if (!business) {
-    // The business was deleted out from under a live session.
-    await clearSessionCookie();
-    redirect("/admin/login");
-  }
 
   // The cookie says whether this session is platform-level, but the cookie is
   // issued by us and could outlive the grant, so the claim is re-checked
   // against the database on every request rather than trusted as signed.
   const isPlatformAdmin = await isPlatformAdminUser(session.userId);
 
-  // An ordinary client login is pinned to its own business. If a session
-  // somehow points elsewhere — a stale cookie from when the user was a
-  // platform admin, or a forged one — it is refused rather than honoured.
+  // The platform admin belongs to no business until they open one. Sending
+  // them to the console is the right answer, not an error.
+  if (!session.businessId) {
+    redirect(isPlatformAdmin ? "/admin/negocios" : "/admin/login");
+  }
+
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+  if (!business) {
+    // The agenda was deleted out from under a live session.
+    redirect(isPlatformAdmin ? "/admin/negocios" : "/admin/login");
+  }
+
+  // A business owner is pinned to their own agenda. If their session points
+  // anywhere else — a stale cookie, or a forged one — it is refused. The
+  // cookie is not cleared here: a server render cannot write cookies, and
+  // trying throws a 500 instead of sending the person to sign in. Signing in
+  // replaces it, which is the same outcome.
   if (!isPlatformAdmin) {
     const owner = await prisma.user.findUnique({
       where: { id: session.userId },
       select: { businessId: true },
     });
-    if (!owner || owner.businessId !== business.id) {
-      await clearSessionCookie();
-      redirect("/admin/login");
-    }
+    if (!owner || owner.businessId !== business.id) redirect("/admin/login");
   }
 
   return { session: { ...session, isPlatformAdmin }, business, businessId: business.id, isPlatformAdmin };
+}
+
+/**
+ * The admin shell's context: who is signed in, and which agenda — if any —
+ * they currently have open. Unlike requireBusinessSession this never
+ * redirects on a missing agenda, because the console itself is a page that
+ * legitimately has none.
+ */
+export async function getAdminContext() {
+  const session = await requireSession();
+  const isPlatformAdmin = await isPlatformAdminUser(session.userId);
+
+  let business = session.businessId
+    ? await prisma.business.findUnique({ where: { id: session.businessId } })
+    : null;
+
+  // Same ownership rule as requireBusinessSession, applied here too: the
+  // shell renders the agenda's name, so a forged session must not reach it
+  // even though the page inside would separately refuse.
+  if (business && !isPlatformAdmin) {
+    const owner = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { businessId: true },
+    });
+    if (!owner || owner.businessId !== business.id) business = null;
+  }
+
+  // A business owner with no agenda has nothing to administer. The cookie is
+  // not cleared here: a server render cannot write cookies, and signing in
+  // replaces it anyway.
+  if (!business && !isPlatformAdmin) redirect("/admin/login");
+
+  return { session, business, isPlatformAdmin };
 }
 
 /** True only if the database still says this user runs the platform. */

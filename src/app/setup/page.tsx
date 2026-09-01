@@ -1,50 +1,47 @@
 import Link from "next/link";
-import { countBusinesses } from "@/lib/business";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { INDUSTRIES } from "@/lib/industries";
-import { AgendaCreator } from "@/components/creator/AgendaCreator";
+import { Card, CardContent } from "@/components/ui/card";
+import { SetupForm } from "./SetupForm";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Crear mi cuenta",
+  robots: { index: false, follow: false },
+};
+
 /**
- * Bootstraps a deployment: the first agenda, and with it the first account,
- * before anyone can sign in. Once that account exists the same creator is
- * available (without the secret) at /admin/negocios.
+ * First run: the superadmin account. Once one exists this page has no job,
+ * so it steps aside — new agendas come from the console, and a forgotten
+ * password from /recuperar.
  */
 export default async function SetupPage() {
-  const [existing, accounts] = await Promise.all([countBusinesses(), prisma.user.count()]);
-  const isFirstRun = accounts === 0;
+  if ((await prisma.user.count()) > 0) redirect("/admin/login");
 
   return (
-    <div className="min-h-screen bg-secondary/30 px-4 py-10">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Nueva agenda</p>
-          <h1 className="text-2xl font-bold">
-            {isFirstRun ? "Pon en marcha tu herramienta" : "Crea una agenda en dos minutos"}
-          </h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            {isFirstRun
-              ? "Esta primera agenda crea también tu cuenta de administrador: el único usuario que necesitas, y con el que después manejas todas las demás."
-              : "Escoge el sector, ponle la marca del cliente y publícala en su propia dirección web. Vas viendo la página real mientras la armas."}
+    <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
+      <div className="w-full max-w-md space-y-4">
+        <div className="text-center">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Primer paso</p>
+          <h1 className="mt-1 text-2xl font-bold">Crea tu cuenta</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Es la única cuenta que necesitas. Con ella creas y manejas todas las agendas.
           </p>
-          {existing > 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Ya hay {existing} {existing === 1 ? "agenda" : "agendas"} en este despliegue.{" "}
-              <Link href="/" className="underline underline-offset-2">
-                Ver la biblioteca
-              </Link>{" "}
-              ·{" "}
-              <Link href="/admin" className="underline underline-offset-2">
-                Entrar al panel
-              </Link>
-            </p>
-          ) : null}
-        </header>
-
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
-          <AgendaCreator industries={INDUSTRIES} mode="setup" isFirstRun={isFirstRun} />
         </div>
+
+        <Card>
+          <CardContent className="py-6">
+            <SetupForm />
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-xs text-muted-foreground">
+          ¿Ya tienes cuenta?{" "}
+          <Link href="/admin/login" className="underline underline-offset-2">
+            Entrar
+          </Link>
+        </p>
       </div>
     </div>
   );
