@@ -87,6 +87,54 @@ export const adminCreateBookingSchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "NO_SHOW", "CANCELLED"]).optional(),
 });
 
+/** Shared by the creator wizard at /setup and inside the admin console. */
+export const createAgendaSchema = z.object({
+  industryKey: z.string().min(1, "Elige el sector del negocio"),
+  businessName: z.string().trim().min(2, "Escribe el nombre del negocio").max(120),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2, "La dirección web es muy corta")
+    .max(60)
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Usa solo letras, números y guiones"),
+
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido"),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido"),
+  fontFamily: z.enum(["inter", "poppins", "montserrat", "playfair", "system", "serif", "mono"]),
+  cornerStyle: z.enum(["sharp", "soft", "round"]),
+  themeMode: z.enum(["light", "dark"]),
+  logoUrl: z.string().trim().max(500).optional().or(z.literal("")),
+  heroImageUrl: z.string().trim().max(500).optional().or(z.literal("")),
+
+  heroHeadline: z.string().trim().max(200).optional().or(z.literal("")),
+  heroSubheadline: z.string().trim().max(300).optional().or(z.literal("")),
+
+  city: z.string().trim().max(120).optional().or(z.literal("")),
+  address: z.string().trim().max(300).optional().or(z.literal("")),
+  contactPhone: z.string().trim().max(30).optional().or(z.literal("")),
+  whatsappNumber: z.string().trim().max(30).optional().or(z.literal("")),
+
+  openDays: z.array(z.number().int().min(0).max(6)).min(1, "Elige al menos un día de atención"),
+  openFromMinute: z.coerce.number().int().min(0).max(24 * 60),
+  openToMinute: z.coerce.number().int().min(0).max(24 * 60),
+
+  staffNames: z.array(z.string().trim().max(120)).optional(),
+
+  listed: z.boolean().optional(),
+  /** Off for a demo (the platform account already reaches it). */
+  createOwnerUser: z.boolean().optional(),
+  ownerEmail: emailSchema.optional().or(z.literal("")),
+  ownerPassword: z.string().max(200).optional().or(z.literal("")),
+}).refine((d) => d.openToMinute > d.openFromMinute, {
+  message: "La hora de cierre debe ser posterior a la de apertura",
+  path: ["openToMinute"],
+}).refine((d) => !d.createOwnerUser || (d.ownerEmail && (d.ownerPassword?.length ?? 0) >= 8), {
+  message: "Para un acceso propio necesitas correo y una contraseña de mínimo 8 caracteres",
+  path: ["ownerPassword"],
+});
+export type CreateAgendaInput = z.infer<typeof createAgendaSchema>;
+
 export const businessSettingsSchema = z.object({
   name: z.string().trim().min(1).max(120),
   slug: z
@@ -98,10 +146,11 @@ export const businessSettingsSchema = z.object({
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Usa solo letras, números y guiones (por ejemplo: salon-aurora)"),
   listed: z.boolean().optional(),
   timezone: z.string().min(1),
-  currency: z.string().min(1).max(10),
   contactEmail: emailSchema.optional().or(z.literal("")),
-  contactPhone: z.string().trim().max(20).optional().or(z.literal("")),
+  contactPhone: z.string().trim().max(30).optional().or(z.literal("")),
+  whatsappNumber: z.string().trim().max(30).optional().or(z.literal("")),
   address: z.string().trim().max(300).optional().or(z.literal("")),
+  city: z.string().trim().max(120).optional().or(z.literal("")),
   website: z.string().trim().max(300).optional().or(z.literal("")),
   instagramUrl: z.string().trim().max(300).optional().or(z.literal("")),
   facebookUrl: z.string().trim().max(300).optional().or(z.literal("")),
@@ -119,8 +168,10 @@ export const businessSettingsSchema = z.object({
 export const brandingSchema = z.object({
   logoUrl: z.string().trim().max(500).optional().or(z.literal("")),
   faviconUrl: z.string().trim().max(500).optional().or(z.literal("")),
+  heroImageUrl: z.string().trim().max(500).optional().or(z.literal("")),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido"),
   accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido"),
-  fontFamily: z.enum(["inter", "system", "serif", "mono"]),
+  fontFamily: z.enum(["inter", "poppins", "montserrat", "playfair", "system", "serif", "mono"]),
+  cornerStyle: z.enum(["sharp", "soft", "round"]),
   themeMode: z.enum(["light", "dark", "auto"]),
 });

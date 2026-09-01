@@ -94,7 +94,7 @@ export function StaffFormDialog({
               <Input id="staff-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="staff-phone">Teléfono</Label>
+              <Label htmlFor="staff-phone">Celular</Label>
               <Input id="staff-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
           </div>

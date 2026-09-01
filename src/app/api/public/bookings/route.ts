@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   });
   const match = slots.find((s) => s.start === requestedStart.toISOString());
   if (!match) {
-    return NextResponse.json({ error: "Ese horario ya no está disponible. Elige otro." }, { status: 409 });
+    return NextResponse.json({ error: "Ese horario ya no está disponible. Escoge otro." }, { status: 409 });
   }
 
   const customer = await prisma.customer.upsert({
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // the database-level exclusion constraint (see prisma/migrations) is
     // the real guarantee against double-booking.
     console.error("[bookings] insert failed, likely a slot race:", err);
-    return NextResponse.json({ error: "Alguien acaba de reservar ese horario. Elige otro." }, { status: 409 });
+    return NextResponse.json({ error: "Alguien se adelantó y tomó ese horario. Escoge otro." }, { status: 409 });
   }
 
   const dateLabel = formatBusinessDate(booking.startsAt, business.timezone);

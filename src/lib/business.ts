@@ -37,6 +37,8 @@ export const listBusinesses = cache(async () => {
       slug: true,
       logoUrl: true,
       primaryColor: true,
+      accentColor: true,
+      city: true,
       heroSubheadline: true,
       _count: { select: { services: { where: { active: true } } } },
     },

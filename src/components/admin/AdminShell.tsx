@@ -11,6 +11,7 @@ import {
   Menu,
   Scissors,
   Settings,
+  Store,
   Users,
   UserSquare2,
   X,
@@ -28,24 +29,57 @@ const NAV_ITEMS = [
   { href: "/admin/settings", label: "Configuración", icon: Settings },
 ];
 
+/** Only a platform admin sees this — it reaches across every business. */
+const PLATFORM_NAV = { href: "/admin/negocios", label: "Mis agendas", icon: Store };
+
 export function AdminShell({
   businessName,
   businessSlug,
   logoUrl,
   userName,
+  isPlatformAdmin = false,
+  agendaCount = 0,
   children,
 }: {
   businessName: string;
   businessSlug: string;
   logoUrl?: string | null;
   userName: string;
+  isPlatformAdmin?: boolean;
+  agendaCount?: number;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const linkClass = (active: boolean) =>
+    cn(
+      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+      active ? "bg-brand text-brand-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+    );
+
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 px-3">
+      {isPlatformAdmin ? (
+        <>
+          <Link
+            href={PLATFORM_NAV.href}
+            onClick={() => setMobileOpen(false)}
+            className={linkClass(pathname.startsWith(PLATFORM_NAV.href))}
+          >
+            <PLATFORM_NAV.icon className="h-4 w-4" />
+            {PLATFORM_NAV.label}
+            {agendaCount ? (
+              <span className="ml-auto rounded-full bg-secondary px-1.5 text-xs text-muted-foreground">
+                {agendaCount}
+              </span>
+            ) : null}
+          </Link>
+          <p className="mt-3 px-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Editando: {businessName}
+          </p>
+        </>
+      ) : null}
       {NAV_ITEMS.map((item) => {
         const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         const Icon = item.icon;
@@ -54,10 +88,7 @@ export function AdminShell({
             key={item.href}
             href={item.href}
             onClick={() => setMobileOpen(false)}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              active ? "bg-brand text-brand-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-            )}
+            className={linkClass(active)}
           >
             <Icon className="h-4 w-4" />
             {item.label}

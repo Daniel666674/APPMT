@@ -17,10 +17,10 @@ export async function updateBusinessProfile(input: unknown) {
   // the whole deployment and must not shadow one of the app's own routes.
   if (slug !== business.slug) {
     if (RESERVED_SLUGS.has(slug)) {
-      throw new Error(`«${slug}» está reservada. Elige otra dirección web.`);
+      throw new Error(`«${slug}» está reservada. Escoge otra dirección web.`);
     }
     const taken = await prisma.business.findUnique({ where: { slug }, select: { id: true } });
-    if (taken) throw new Error(`La dirección web «${slug}» ya está en uso. Elige otra.`);
+    if (taken) throw new Error(`La dirección web «${slug}» ya está en uso. Escoge otra.`);
   }
 
   await prisma.business.update({
@@ -30,7 +30,9 @@ export async function updateBusinessProfile(input: unknown) {
       slug,
       contactEmail: data.contactEmail || null,
       contactPhone: data.contactPhone || null,
+      whatsappNumber: normalizeWhatsapp(data.whatsappNumber),
       address: data.address || null,
+      city: data.city || null,
       website: data.website || null,
       instagramUrl: data.instagramUrl || null,
       facebookUrl: data.facebookUrl || null,
@@ -59,10 +61,19 @@ export async function updateBranding(input: unknown) {
       ...data,
       logoUrl: data.logoUrl || null,
       faviconUrl: data.faviconUrl || null,
+      heroImageUrl: data.heroImageUrl || null,
     },
   });
 
   revalidatePath("/");
   revalidatePath(`/${business.slug}`, "layout");
   revalidatePath("/admin", "layout");
+}
+
+/** Digits only, with the Colombian country code added to a bare mobile. */
+function normalizeWhatsapp(input: string | undefined) {
+  if (!input) return null;
+  const digits = input.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits.length === 10 && digits.startsWith("3") ? `57${digits}` : digits;
 }

@@ -26,7 +26,9 @@
   --brand-primary: #4f46e5;
   --brand-primary-hover: #4338ca;
   --brand-primary-foreground: #ffffff;
+  --brand-primary-soft: rgba(79, 70, 229, 0.1);
   --brand-accent: #0ea5e9;
+  --brand-accent-soft: rgba(14, 165, 233, 0.12);
   --brand-accent-foreground: #ffffff;
   --brand-font: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
@@ -69,7 +71,9 @@
   --color-brand: var(--brand-primary);
   --color-brand-hover: var(--brand-primary-hover);
   --color-brand-foreground: var(--brand-primary-foreground);
+  --color-brand-soft: var(--brand-primary-soft);
   --color-accent: var(--brand-accent);
+  --color-accent-soft: var(--brand-accent-soft);
   --color-accent-foreground: var(--brand-accent-foreground);
 
   --font-sans: var(--brand-font);

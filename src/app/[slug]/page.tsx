@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { formatDuration, formatMoney } from "@/lib/utils";
 import { SiteHeader } from "@/components/booking/SiteHeader";
 import { SiteFooter } from "@/components/booking/SiteFooter";
+import { WhatsAppButton } from "@/components/booking/WhatsAppButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -26,21 +27,44 @@ export default async function BusinessHomePage({ params }: { params: Promise<{ s
       <SiteHeader business={business} />
 
       <main className="flex-1">
-        <section className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-24">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
-            {business.heroHeadline || `Reserva tu cita en ${business.name}`}
-          </h1>
-          {business.heroSubheadline ? (
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">{business.heroSubheadline}</p>
+        <section className="relative">
+          {business.heroImageUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={business.heroImageUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/55" />
+            </>
           ) : null}
+          <div
+            className={`relative mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-24 ${
+              business.heroImageUrl ? "text-white" : ""
+            }`}
+          >
+            <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
+              {business.heroHeadline || `Agenda tu cita en ${business.name}`}
+            </h1>
+            {business.heroSubheadline ? (
+              <p
+                className={`mx-auto mt-4 max-w-2xl text-lg ${
+                  business.heroImageUrl ? "text-white/85" : "text-muted-foreground"
+                }`}
+              >
+                {business.heroSubheadline}
+              </p>
+            ) : null}
+          </div>
         </section>
 
         <section className="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-          <h2 className="mb-6 text-xl font-semibold">Elige un servicio</h2>
+          <h2 className="mb-6 text-xl font-semibold">Escoge un servicio</h2>
           {services.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
-                Todavía no hay servicios publicados. Agrega uno desde el panel de administración.
+                Todavía no hay servicios publicados. Agrega uno desde el panel.
               </CardContent>
             </Card>
           ) : (
@@ -88,6 +112,9 @@ export default async function BusinessHomePage({ params }: { params: Promise<{ s
       </main>
 
       <SiteFooter business={business} />
+      {business.whatsappNumber ? (
+        <WhatsAppButton number={business.whatsappNumber} businessName={business.name} />
+      ) : null}
     </div>
   );
 }

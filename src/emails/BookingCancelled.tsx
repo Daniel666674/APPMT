@@ -27,7 +27,7 @@ export function BookingCancelledEmail(props: {
         <DetailRow label="Hora" value={timeLabel} />
       </Section>
       <Text style={{ fontSize: 14, color: "#3f3f46" }}>
-        ¿Quieres reagendar? <a href={bookAgainUrl} style={{ color: primaryColor }}>Elige una nueva hora</a>.
+        ¿Quieres reagendar? <a href={bookAgainUrl} style={{ color: primaryColor }}>Escoge una nueva hora</a>.
       </Text>
     </EmailLayout>
   );

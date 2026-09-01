@@ -15,6 +15,14 @@ not a deploy.
 - **A URL per business** — every client books at `/su-negocio`, on the same
   deployment and the same database. Signing in as one business shows only
   that business's data; see **Tenant isolation** below.
+- **An agenda creator with a live preview** — pick a sector, set the brand
+  and hours, and watch the client's real booking page build itself beside
+  the form. Ends with the shareable link.
+- **One console for every agenda** — `/admin/negocios` lists them all;
+  entering one points your session at it, so you edit its services, prices,
+  staff, hours and brand from the same login. No separate account per demo.
+- **A demo library at `/`** — every listed agenda with its own link, ready
+  to share with a prospect in that trade.
 - **Public booking site** — service list, staff picker, real-time available
   time slots, booking form, email confirmation with a calendar (.ics)
   attachment, and a no-login "manage my appointment" cancel link.
@@ -34,12 +42,18 @@ not a deploy.
 - **Auth** — simple, self-contained session auth (bcrypt + signed JWT
   cookies) for the admin dashboard. No third-party auth service required.
 
-## Language
+## Language and market
 
-The entire product ships in **Spanish** — public booking flow, admin
-dashboard, validation messages, date/currency formatting (`es-CO`), and all
-transactional emails. Copy lives inline in the components; there is no i18n
-layer, so translating to another language means editing the strings.
+Built for **Colombia**, in Spanish only. Copy uses Colombian phrasing
+throughout ("agenda tu cita", "aparta tu turno", "escoge", "celular"),
+prices are **COP** everywhere with `es-CO` formatting, times run in
+`America/Bogota`, and every booking page can carry a floating **WhatsApp**
+button.
+
+Currency is deliberately not user-editable — `Business.currency` stays COP
+so the money formatter has one source of truth. Copy lives inline in the
+components; there is no i18n layer, so another language means editing the
+strings.
 
 ## Tech stack
 
@@ -101,31 +115,37 @@ new project, no new database, no redeploy.
    fresh database and on every later deploy. Delete it once every deployment
    you run has moved past that migration.
 
-### 3. Add a business — in the browser, no local machine needed
+### 3. Create your first agenda
 
-Open **`https://your-app.vercel.app/setup`** and fill in the form:
+Open **`https://your-app.vercel.app/setup`**, which asks for `SETUP_SECRET`
+and walks five steps — sector, business, brand, hours, access — with a live
+preview of the booking page beside the form. It ends with the shareable URL.
 
-- **Sector del negocio** — picks an industry preset (see below).
-- **Nombre del negocio** — leave blank to use the preset's example name.
-- **Correo / contraseña** — becomes that client's admin login.
-- **Clave de instalación** — the `SETUP_SECRET` you set in step 2.
+The account created here is the **platform admin**: the one login that
+reaches every agenda on the deployment. After this you never need `/setup`
+again — create the rest from **/admin/negocios → Nueva agenda**, signed in.
 
-Submitting creates the business, its admin user, and a full set of demo
-services, staff and working hours for that industry, then hands you the
-client's booking URL (`/su-negocio`). That URL is what you give the client.
+#### Demos vs. clients
 
-**Run this once per client.** The page stays available precisely because
-adding the next business is the same form again; `SETUP_SECRET` is what
-stops anyone else from using it, so treat it like a password. Each owner
-email can only be used once.
+The last step of the creator asks which kind of agenda this is, and the
+distinction matters:
 
-The client's URL comes from their business name and is editable later at
+- **"Es una demo mía"** — creates no login at all. You manage it from your
+  own account alongside every other agenda. This is how ten demos share one
+  email and one password: there is one account, not ten copies of it.
+- **"Es de un cliente"** — creates a login scoped to that agenda only. The
+  client signs in, sees their own bookings, and cannot reach any other
+  business or the console.
+
+Either way the agenda's services, prices, staff, schedules and brand are
+fully editable — for a demo, by entering it from the console.
+
+The URL comes from the business name and is editable later at
 **/admin/settings → General → Dirección web**. Changing it breaks previously
 shared links, so settle on it early.
 
-Automating instead? `/api/setup` also accepts GET with query params
-(`secret`, `email`, `password`, `business`, `industry`), and
-`npm run db:seed` seeds all ten presets at once from a local checkout.
+`npm run db:seed` creates all fifteen sector demos at once from a local
+checkout, plus the platform account.
 
 ### Industry presets
 
@@ -136,14 +156,29 @@ barbería · peluquería y salón de belleza · spa y estética · clínica dent
 · consultorio médico · salón de uñas · estudio de tatuajes · entrenamiento
 personal · veterinaria · consultoría
 
-This exists to make selling easier. `npm run db:seed` creates one business
-per preset, so `/` becomes a directory of ten live demos — a prospect in any
-of those trades can click straight into a booking page that looks like
-theirs rather than placeholder text. Add or edit presets in that one file.
+This exists to make selling easier. `npm run db:seed` creates one agenda per
+preset, so `/` becomes a **library of live demos** — a prospect in any of
+those trades can click straight into a booking page that looks like theirs
+rather than placeholder text, and each demo has its own link to share on its
+own. Add or edit presets in that one file.
 
-A real client usually shouldn't sit in that public directory: turn off
-**/admin/settings → General → Visibilidad** and their page still works at
-its URL, it just stops being listed on the front page.
+A real client usually shouldn't sit in that public library: turn off
+**/admin/settings → General → Visibilidad** (or the console's "Ocultar de la
+biblioteca") and their page still works at its URL, it just stops being
+listed on the front page.
+
+### Brand identity
+
+Everything a client sees is theirs, set from the creator or
+**/admin/settings → Marca**, both with a live preview:
+
+primary and accent color (ten ready palettes or any hex) · seven typefaces ·
+corner style (rectas / suaves / muy redondeadas) · light or dark · logo ·
+browser icon · hero cover photo · headline, sub-headline and about copy ·
+WhatsApp button.
+
+These render as CSS custom properties (`src/lib/theme.ts`), so a rebrand is
+a form submission — never a deploy.
 
 > **Note on passwords:** there's no self-service password reset yet (see
 > **Known limitations**). Pick the client's password carefully at setup, or
@@ -182,6 +217,13 @@ to their name on the Staff page).
   for active bookings. Two concurrent requests for the same slot cannot both
   succeed — the second gets a clean 409 response — even though the
   application-level check alone would have a race window.
+- **Platform access is a database fact, not a cookie claim.** The session
+  carries `isPlatformAdmin`, but `requireBusinessSession()` re-reads it from
+  the database on every request, and an ordinary login is pinned to its own
+  `businessId` — a cookie that claims otherwise is cleared, not honoured.
+  `switchBusiness` is the only code path that rewrites a session's business,
+  and it is gated the same way. Tested in `tests/platform-admin.mjs`,
+  forged cookies included.
 - **Tenant isolation.** Every tenant-owned row (`User`, `Staff`, `Service`,
   `Customer`, `Booking`, `TimeOff`) carries a `businessId`, and there are
   exactly two ways to establish which business a request is in: public pages
@@ -213,14 +255,16 @@ to their name on the Staff page).
 
 Because one deployment now holds every client's data, "business A cannot see
 or touch business B" is the property that must never regress. `tests/` backs
-it with 56 assertions against a real build and a real database — cross-tenant
-ids on every public API, cross-tenant slugs on every public page, and every
-admin server action invoked for real with another business's ids, then the
-database checked to confirm nothing moved.
+it with 86 assertions against a real build and a real database — cross-tenant
+ids on every public API, cross-tenant slugs on every public page, every admin
+server action invoked for real with another business's ids, and every
+reseller-level route and action attempted from a client login and from a
+forged platform cookie — then the database checked to confirm nothing moved.
 
 ```bash
 node tests/tenant-isolation.mjs          # public surface
 node tests/tenant-isolation-actions.mjs  # admin server actions
+node tests/platform-admin.mjs            # reseller privilege boundary
 ```
 
 See `tests/README.md` for the setup they need. Run them after any change to
@@ -229,11 +273,13 @@ a query, a route, or the session.
 ## Known limitations / good next additions
 
 - One admin account per business (no multi-user staff logins yet, no in-app
-  password reset — set the password carefully at setup, or change it later
-  via Prisma Studio).
-- Adding a business requires `SETUP_SECRET`; there's no self-service signup,
-  which is deliberate for a reseller product but means you onboard each
-  client yourself.
+  password reset — set the password carefully at creation, or change it
+  later via Prisma Studio).
+- Adding a business requires the platform account or `SETUP_SECRET`; there's
+  no self-service signup, which is deliberate for a reseller product but
+  means you onboard each client yourself.
+- Logo, favicon and cover photo are set by URL, not uploaded. Vercel Blob is
+  the natural next step.
 - Businesses share one database. That's what makes a single deployment work,
   but it also means a client's data lives alongside other clients' — if you
   sell to someone who contractually requires physical separation, give them
@@ -260,12 +306,16 @@ src/components/ui/            Hand-built, Radix-based UI primitives (themeable)
 src/components/booking/       Public booking flow components
 src/components/admin/         Admin-only shared components
 src/lib/business.ts           How a request resolves which business it's in
-src/lib/industries.ts         The ten industry presets
+src/lib/industries.ts         The fifteen sector presets
+src/lib/theme.ts              Brand kit -> CSS custom properties
+src/lib/agenda-creator.ts     One code path behind both creator entry points
+src/components/creator/       The creator wizard and its live booking preview
 src/lib/provision.ts          Creates a business + its demo data
 src/app/page.tsx              Public directory of all listed businesses
 src/app/[slug]/               One business's public booking site
 src/app/manage/[token]/       No-login cancel page (business comes from the booking)
-src/app/setup/                Add-a-business form (SETUP_SECRET gated)
+src/app/setup/                First-run creator (SETUP_SECRET gated)
+src/app/admin/(dashboard)/negocios/   Console: every agenda, and the creator
 src/app/admin/(dashboard)/    Authenticated admin dashboard, scoped to one business
 src/app/api/public/           Booking creation, availability, cancellation
 src/app/api/cron/reminders/   Daily email reminder job, all businesses (see vercel.json)

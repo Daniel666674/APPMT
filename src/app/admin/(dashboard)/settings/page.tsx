@@ -9,10 +9,18 @@ import { BrandingForm } from "./BrandingForm";
 
 export default async function SettingsPage() {
   const { business, businessId } = await requireBusinessSession();
-  const holidays = await prisma.timeOff.findMany({
-    where: { businessId, staffId: null, date: { gte: new Date() } },
-    orderBy: { date: "asc" },
-  });
+  const [holidays, services] = await Promise.all([
+    prisma.timeOff.findMany({
+      where: { businessId, staffId: null, date: { gte: new Date() } },
+      orderBy: { date: "asc" },
+    }),
+    // Feeds the branding preview with this business's real services.
+    prisma.service.findMany({
+      where: { businessId, active: true },
+      orderBy: { sortOrder: "asc" },
+      take: 3,
+    }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -36,10 +44,11 @@ export default async function SettingsPage() {
                   slug: business.slug,
                   listed: business.listed,
                   timezone: business.timezone,
-                  currency: business.currency,
                   contactEmail: business.contactEmail ?? "",
                   contactPhone: business.contactPhone ?? "",
+                  whatsappNumber: business.whatsappNumber ?? "",
                   address: business.address ?? "",
+                  city: business.city ?? "",
                   website: business.website ?? "",
                   instagramUrl: business.instagramUrl ?? "",
                   facebookUrl: business.facebookUrl ?? "",
@@ -60,10 +69,26 @@ export default async function SettingsPage() {
                 initial={{
                   logoUrl: business.logoUrl ?? "",
                   faviconUrl: business.faviconUrl ?? "",
+                  heroImageUrl: business.heroImageUrl ?? "",
                   primaryColor: business.primaryColor,
                   accentColor: business.accentColor,
-                  fontFamily: business.fontFamily as "inter" | "system" | "serif" | "mono",
-                  themeMode: business.themeMode as "light" | "dark" | "auto",
+                  fontFamily: business.fontFamily,
+                  cornerStyle: business.cornerStyle,
+                  themeMode: business.themeMode === "dark" ? "dark" : "light",
+                }}
+                context={{
+                  businessName: business.name,
+                  slug: business.slug,
+                  heroHeadline: business.heroHeadline ?? `Agenda tu cita en ${business.name}`,
+                  heroSubheadline: business.heroSubheadline ?? "",
+                  whatsappNumber: business.whatsappNumber ?? "",
+                  contactPhone: business.contactPhone ?? "",
+                  services: services.map((s) => ({
+                    name: s.name,
+                    description: s.description ?? "",
+                    durationMinutes: s.durationMinutes,
+                    price: Number(s.price ?? 0),
+                  })),
                 }}
               />
             </TabsContent>

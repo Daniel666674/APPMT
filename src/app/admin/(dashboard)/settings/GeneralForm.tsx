@@ -15,10 +15,11 @@ interface Props {
   slug: string;
   listed: boolean;
   timezone: string;
-  currency: string;
   contactEmail: string;
   contactPhone: string;
+  whatsappNumber: string;
   address: string;
+  city: string;
   website: string;
   instagramUrl: string;
   facebookUrl: string;
@@ -117,16 +118,28 @@ export function GeneralForm({ initial }: { initial: Props }) {
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="currency">Moneda (código ISO)</Label>
-            <Input id="currency" value={values.currency} onChange={(e) => set("currency", e.target.value.toUpperCase())} maxLength={3} />
-          </div>
-          <div className="space-y-1.5">
             <Label htmlFor="contactEmail">Correo de contacto</Label>
             <Input id="contactEmail" type="email" value={values.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="contactPhone">Teléfono de contacto</Label>
             <Input id="contactPhone" value={values.contactPhone} onChange={(e) => set("contactPhone", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="whatsappNumber">WhatsApp</Label>
+            <Input
+              id="whatsappNumber"
+              value={values.whatsappNumber}
+              onChange={(e) => set("whatsappNumber", e.target.value)}
+              placeholder="300 123 4567"
+            />
+            <p className="text-xs text-muted-foreground">
+              Pone un botón flotante en tu página de reservas. Déjalo vacío para quitarlo.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="city">Ciudad</Label>
+            <Input id="city" value={values.city} onChange={(e) => set("city", e.target.value)} placeholder="Bogotá" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="address">Dirección</Label>
@@ -156,7 +169,7 @@ export function GeneralForm({ initial }: { initial: Props }) {
               id="heroHeadline"
               value={values.heroHeadline}
               onChange={(e) => set("heroHeadline", e.target.value)}
-              placeholder={`Reserva tu cita en ${values.name}`}
+              placeholder={`Agenda tu cita en ${values.name}`}
             />
           </div>
           <div className="space-y-1.5">
@@ -227,7 +240,7 @@ export function GeneralForm({ initial }: { initial: Props }) {
           </div>
           <div className="flex items-center gap-2 pt-6">
             <Switch checked={values.requirePhone} onCheckedChange={(v) => set("requirePhone", v)} />
-            <Label>Exigir teléfono al reservar</Label>
+            <Label>Pedir el celular al agendar</Label>
           </div>
         </div>
       </section>

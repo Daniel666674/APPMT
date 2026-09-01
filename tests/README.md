@@ -12,6 +12,11 @@ prove it against a real running server and a real database — no mocks.
   server action (create/update/delete for staff, services, appointments,
   availability and settings) is invoked for real with **another business's
   ids**, then the database is checked to confirm nothing moved.
+- `platform-admin.mjs` — the reseller privilege boundary. Platform access
+  reaches every agenda, so this checks a client login cannot list, enter,
+  create or delete another one — including with a **forged cookie** that
+  simply claims `isPlatformAdmin`, or claims to already stand inside someone
+  else's agenda. It also checks the platform admin genuinely can.
 
 ## Running them
 
@@ -35,6 +40,7 @@ npm start -- -p 3100 &
 # 4. run
 TEST_URL=http://localhost:3100 node tests/tenant-isolation.mjs
 TEST_URL=http://localhost:3100 node tests/tenant-isolation-actions.mjs
+TEST_URL=http://localhost:3100 node tests/platform-admin.mjs
 ```
 
 Both exit non-zero if anything fails. They clean up after themselves, so

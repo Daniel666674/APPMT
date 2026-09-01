@@ -147,7 +147,7 @@ export function BookingWizard({
         <div className="space-y-6">
           {showAnyOption && (
             <div>
-              <p className="mb-2 text-sm font-medium">Elige con quién</p>
+              <p className="mb-2 text-sm font-medium">Escoge con quién</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -178,13 +178,13 @@ export function BookingWizard({
           )}
 
           <div>
-            <p className="mb-2 text-sm font-medium">Elige la fecha</p>
+            <p className="mb-2 text-sm font-medium">Escoge el día</p>
             <DatePicker value={date} onChange={handleDateChange} minDate={minDate} maxDate={maxDate} />
           </div>
 
           {date && (
             <div>
-              <p className="mb-2 text-sm font-medium">Elige la hora</p>
+              <p className="mb-2 text-sm font-medium">Escoge la hora</p>
               {loadingSlots ? (
                 <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" /> Cargando horarios…

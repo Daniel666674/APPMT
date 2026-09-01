@@ -34,6 +34,7 @@ export async function login(_prevState: LoginState | undefined, formData: FormDa
     email: user.email,
     name: user.name,
     role: user.role,
+    isPlatformAdmin: user.isPlatformAdmin,
   });
 
   const next = formData.get("next");

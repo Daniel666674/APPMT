@@ -66,7 +66,7 @@ export async function createAppointment(input: unknown) {
       },
     });
   } catch {
-    throw new Error("Ese horario acaba de ocuparse. Elige otro.");
+    throw new Error("Ese horario acaba de ocuparse. Escoge otro.");
   }
 
   if (booking.status === "CONFIRMED") {

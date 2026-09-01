@@ -1,84 +1,130 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { listBusinesses } from "@/lib/business";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { INDUSTRIES } from "@/lib/industries";
+import { ShareLink } from "@/components/directory/ShareLink";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Agenda de citas" };
+export const metadata = {
+  title: "Agendas en línea para tu negocio",
+  description:
+    "Cada negocio con su propia página de reservas: servicios, equipo, horarios y marca. Mira las demos.",
+};
 
 /**
- * Directory of every business on this deployment. Doubles as a demo
- * showcase: each card links to a fully working booking site.
+ * The demo library — the page shown to a prospect. Every agenda on the
+ * deployment that is marked `listed` appears here with its own link, so a
+ * demo can be shared on its own or the whole library browsed by sector. A
+ * real client is hidden from here with the Visibilidad switch in their
+ * settings.
  */
 export default async function DirectoryPage() {
   const businesses = await listBusinesses();
 
   return (
-    <div className="flex min-h-screen flex-col bg-secondary/30">
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-16 sm:px-6">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Agenda de citas</h1>
-          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Cada negocio tiene su propia página de reservas. Elige uno para ver cómo funciona.
+    <div className="min-h-screen bg-secondary/25">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto max-w-6xl px-4 py-12 text-center sm:px-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Agendas en línea
+          </p>
+          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
+            Tus clientes reservan solos, a cualquier hora
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
+            Cada negocio tiene su propia página con su marca, sus servicios y sus horarios. El cliente
+            escoge y reserva desde el celular, sin llamar y sin crear cuenta. Entra a cualquiera de estas
+            demos y pruébala como si fueras el cliente.
           </p>
         </div>
+      </header>
 
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         {businesses.length === 0 ? (
-          <Card className="mx-auto max-w-md">
-            <CardContent className="space-y-4 py-10 text-center">
-              <h2 className="text-lg font-semibold">Todavía no hay negocios</h2>
-              <p className="text-sm text-muted-foreground">
-                Crea el primero desde la página de configuración.
-              </p>
-              <Button asChild variant="brand">
-                <Link href="/setup">Crear un negocio</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyLibrary />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {businesses.map((business) => (
-              <Link key={business.id} href={`/${business.slug}`}>
-                <Card className="h-full transition-shadow hover:shadow-md">
-                  <CardContent className="flex h-full flex-col gap-3 p-6">
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"
-                      style={{ backgroundColor: business.primaryColor }}
+          <>
+            <p className="mb-4 text-sm text-muted-foreground">
+              {businesses.length} {businesses.length === 1 ? "agenda" : "agendas"} para mirar.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {businesses.map((business) => (
+                <article
+                  key={business.id}
+                  className="group flex flex-col rounded-xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md"
+                >
+                  <Link href={`/${business.slug}`} className="flex-1">
+                    <span
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-base font-bold text-white"
+                      style={{
+                        background: `linear-gradient(135deg, ${business.primaryColor}, ${business.accentColor})`,
+                      }}
                     >
-                      {business.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <h2 className="font-semibold leading-tight">{business.name}</h2>
-                      <p className="mt-0.5 font-mono text-xs text-muted-foreground">/{business.slug}</p>
-                    </div>
+                      {business.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <h2 className="mt-3 font-semibold group-hover:text-brand">{business.name}</h2>
+                    <p className="font-mono text-xs text-muted-foreground">/{business.slug}</p>
                     {business.heroSubheadline ? (
-                      <p className="line-clamp-2 text-sm text-muted-foreground">{business.heroSubheadline}</p>
+                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                        {business.heroSubheadline}
+                      </p>
                     ) : null}
-                    <div className="mt-auto flex items-center justify-between pt-2 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-1.5">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {business._count.services} servicios
-                      </span>
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+                  </Link>
+
+                  <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      {business._count.services} servicios
+                    </span>
+                    <ShareLink slug={business.slug} name={business.name} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
         )}
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-3 text-sm">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/setup">Crear otro negocio</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin">Panel de administración</Link>
-          </Button>
-        </div>
+        <section className="mt-12 rounded-xl border border-border bg-card p-6">
+          <h2 className="text-lg font-bold">Sirve para cualquier negocio con citas</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Cada sector arranca con sus servicios, precios y equipo ya cargados. Todo se cambia después
+            desde el panel.
+          </p>
+          <ul className="mt-4 flex flex-wrap gap-2">
+            {INDUSTRIES.map((industry) => (
+              <li
+                key={industry.key}
+                className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs"
+              >
+                <span className="h-2 w-2 rounded-full" style={{ background: industry.primaryColor }} />
+                {industry.label}
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
+
+      <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+        <Link href="/admin" className="hover:text-foreground">
+          Entrar al panel
+        </Link>
+      </footer>
+    </div>
+  );
+}
+
+function EmptyLibrary() {
+  return (
+    <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+      <h2 className="text-lg font-bold">Todavía no hay agendas</h2>
+      <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+        Crea la primera desde{" "}
+        <Link href="/setup" className="underline underline-offset-2">
+          /setup
+        </Link>
+        . Necesitas la clave de instalación (<code>SETUP_SECRET</code>) de este despliegue.
+      </p>
     </div>
   );
 }

@@ -20,10 +20,18 @@ function getSecretKey() {
 
 export interface SessionPayload {
   userId: string;
+  /**
+   * The business this session is currently managing. For an ordinary client
+   * login this is their own business and never changes. A platform admin can
+   * point it at any business (see switchBusiness), which is what lets one
+   * login run every agenda on the deployment.
+   */
   businessId: string;
   email: string;
   name: string;
   role: "OWNER" | "STAFF";
+  /** Reseller-level access. Never inferred — always read back from the DB. */
+  isPlatformAdmin: boolean;
 }
 
 export async function hashPassword(password: string) {
@@ -58,6 +66,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
         email: payload.email,
         name: payload.name,
         role: payload.role,
+        isPlatformAdmin: payload.isPlatformAdmin === true,
       };
     }
     return null;
@@ -111,5 +120,45 @@ export async function requireBusinessSession() {
     await clearSessionCookie();
     redirect("/admin/login");
   }
-  return { session, business, businessId: business.id };
+
+  // The cookie says whether this session is platform-level, but the cookie is
+  // issued by us and could outlive the grant, so the claim is re-checked
+  // against the database on every request rather than trusted as signed.
+  const isPlatformAdmin = await isPlatformAdminUser(session.userId);
+
+  // An ordinary client login is pinned to its own business. If a session
+  // somehow points elsewhere — a stale cookie from when the user was a
+  // platform admin, or a forged one — it is refused rather than honoured.
+  if (!isPlatformAdmin) {
+    const owner = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { businessId: true },
+    });
+    if (!owner || owner.businessId !== business.id) {
+      await clearSessionCookie();
+      redirect("/admin/login");
+    }
+  }
+
+  return { session: { ...session, isPlatformAdmin }, business, businessId: business.id, isPlatformAdmin };
+}
+
+/** True only if the database still says this user runs the platform. */
+export async function isPlatformAdminUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isPlatformAdmin: true, active: true },
+  });
+  return Boolean(user?.isPlatformAdmin && user.active);
+}
+
+/**
+ * Gate for anything that reaches across businesses — the agenda console, the
+ * creator, deleting a client. Sends anyone else back to their own dashboard
+ * rather than leaking that the page exists.
+ */
+export async function requirePlatformAdmin() {
+  const session = await requireSession();
+  if (!(await isPlatformAdminUser(session.userId))) redirect("/admin");
+  return session;
 }

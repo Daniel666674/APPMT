@@ -31,6 +31,10 @@ model Business {
   accentColor  String @default("#0ea5e9")
   fontFamily   String @default("inter")
   themeMode    String @default("light") // light | dark
+  /// sharp | soft | round — drives the corner radius of every card and button.
+  cornerStyle  String @default("soft")
+  /// Optional photo behind the hero on the booking page.
+  heroImageUrl String?
 
   // Public booking page copy
   heroHeadline    String?
@@ -40,12 +44,18 @@ model Business {
   // Contact / footer
   contactEmail String?
   contactPhone String?
+  /// Colombian businesses live on WhatsApp; this renders a floating button
+  /// on the booking page. Digits only, with country code.
+  whatsappNumber String?
   address      String?
+  city         String?
   website      String?
   instagramUrl String?
   facebookUrl  String?
 
   timezone String @default("America/Bogota")
+  /// Always COP. Kept as a column so the money formatter has one source of
+  /// truth, but it is not editable — this product is sold in Colombia.
   currency String @default("COP")
 
   // Booking rules
@@ -87,6 +97,10 @@ model User {
   passwordHash String
   name         String
   role         Role     @default(OWNER)
+
+  /// Reseller-level access: can list, enter and edit EVERY business on this
+  /// deployment, not just their own. Reserved for whoever runs the platform.
+  isPlatformAdmin Boolean @default(false)
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

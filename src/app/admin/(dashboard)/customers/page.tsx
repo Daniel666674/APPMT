@@ -46,7 +46,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         </CardHeader>
         <CardContent className="space-y-4">
           <form method="GET" className="max-w-sm">
-            <Input name="q" defaultValue={q ?? ""} placeholder="Buscar por nombre, correo o teléfono…" />
+            <Input name="q" defaultValue={q ?? ""} placeholder="Buscar por nombre, correo o celular…" />
           </form>
           <Table>
             <TableHeader>

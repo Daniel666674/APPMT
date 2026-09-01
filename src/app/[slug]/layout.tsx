@@ -12,7 +12,7 @@ export async function generateMetadata({
   const business = await getBusinessBySlug(slug);
   if (!business) return { title: "Negocio no encontrado" };
   return {
-    title: `${business.name} — Reserva tu cita`,
+    title: `${business.name} — Agenda tu cita`,
     description: business.heroSubheadline ?? `Reserva tu próxima cita en ${business.name} por internet.`,
     icons: business.faviconUrl ? [{ url: business.faviconUrl }] : undefined,
   };

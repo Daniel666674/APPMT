@@ -8,27 +8,40 @@ const OWNER_EMAIL = process.env.SEED_OWNER_EMAIL ?? "owner@example.com";
 const OWNER_PASSWORD = process.env.SEED_OWNER_PASSWORD ?? "changeme123";
 
 /**
- * Seeds one demo business per industry, each on its own URL. The result is a
- * showcase you can walk a prospect through — the same product wearing ten
- * different brands — rather than a single empty scheduler.
+ * Seeds one demo agenda per industry, each on its own URL, plus the single
+ * platform-admin account that runs all of them.
  *
- * The first industry gets SEED_OWNER_EMAIL so there's an account you can
- * actually sign into; the rest get placeholder owners. Businesses whose owner
- * email already exists are skipped, so re-running the seed is safe.
+ * The demos deliberately carry no login of their own. One account reaches
+ * every agenda from /admin/negocios, so there is one email and one password
+ * to remember no matter how many demos exist — and each demo's services,
+ * prices, staff and hours stay fully editable from that account.
+ *
+ * Re-running is safe: it only creates agendas whose slug is still free.
  */
 async function main() {
-  const created: { name: string; slug: string; email: string }[] = [];
+  const created: { name: string; slug: string }[] = [];
   let skipped = 0;
 
   for (const [index, industry] of INDUSTRIES.entries()) {
-    const ownerEmail = index === 0 ? OWNER_EMAIL : `demo.${industry.key}@example.com`;
+    const exists = await prisma.business.findFirst({
+      where: { name: industry.defaultBusinessName },
+      select: { id: true },
+    });
+    if (exists) {
+      skipped += 1;
+      continue;
+    }
+
     try {
+      // The first agenda carries the platform account; the rest carry none.
+      const isFirst = index === 0;
       const result = await provisionBusiness(prisma, {
-        ownerEmail,
-        ownerPassword: OWNER_PASSWORD,
         industryKey: industry.key,
+        createOwnerUser: isFirst,
+        ownerEmail: isFirst ? OWNER_EMAIL : undefined,
+        ownerPassword: isFirst ? OWNER_PASSWORD : undefined,
       });
-      created.push({ name: result.businessName, slug: result.slug, email: result.ownerEmail });
+      created.push({ name: result.businessName, slug: result.slug });
     } catch (err) {
       if (err instanceof ProvisionError) {
         skipped += 1;
@@ -39,17 +52,19 @@ async function main() {
   }
 
   if (!created.length) {
-    console.log("\nNothing to do — every demo business already exists.\n");
-    return;
+    console.log("\nNothing to do — every demo agenda already exists.\n");
+  } else {
+    console.log("\nSeed complete.\n");
+    for (const business of created) {
+      console.log(`  /${business.slug.padEnd(28)} ${business.name}`);
+    }
+    if (skipped) console.log(`\n  ${skipped} already existed and were skipped.`);
   }
 
-  console.log("\nSeed complete.\n");
-  for (const business of created) {
-    console.log(`  /${business.slug.padEnd(28)} ${business.name}  (${business.email})`);
-  }
-  if (skipped) console.log(`\n  ${skipped} already existed and were skipped.`);
-  console.log(`\nAdmin login: ${OWNER_EMAIL} / ${OWNER_PASSWORD}`);
-  console.log("Every demo owner uses the same password. Change it before going anywhere near production.\n");
+  const admin = await prisma.user.findFirst({ where: { isPlatformAdmin: true } });
+  console.log(`\nOne login runs all of them: ${admin?.email ?? OWNER_EMAIL} / ${OWNER_PASSWORD}`);
+  console.log("Sign in at /admin, then open Negocios to switch between agendas.");
+  console.log("Change this password before going anywhere near production.\n");
 }
 
 main()

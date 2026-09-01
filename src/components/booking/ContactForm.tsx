@@ -29,7 +29,7 @@ export function ContactForm({
 }) {
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(
-      requirePhone ? schema.extend({ customerPhone: z.string().trim().min(7, "Escribe un teléfono válido") }) : schema
+      requirePhone ? schema.extend({ customerPhone: z.string().trim().min(7, "Escribe un celular válido") }) : schema
     ),
     defaultValues: { customerName: "", customerEmail: "", customerPhone: "", customerNotes: "" },
   });
@@ -51,7 +51,7 @@ export function ContactForm({
         )}
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="customerPhone">Teléfono {requirePhone ? "" : <span className="text-muted-foreground">(opcional)</span>}</Label>
+        <Label htmlFor="customerPhone">Celular {requirePhone ? "" : <span className="text-muted-foreground">(opcional)</span>}</Label>
         <Input id="customerPhone" type="tel" autoComplete="tel" {...form.register("customerPhone")} />
         {form.formState.errors.customerPhone && (
           <p className="text-xs text-destructive">{form.formState.errors.customerPhone.message}</p>

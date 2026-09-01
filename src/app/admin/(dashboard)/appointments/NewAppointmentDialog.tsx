@@ -95,7 +95,7 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
               <Label>Servicio</Label>
               <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setStaffId(""); }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Elige un servicio" />
+                  <SelectValue placeholder="Escoge un servicio" />
                 </SelectTrigger>
                 <SelectContent>
                   {services.map((s) => (
@@ -110,7 +110,7 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
               <Label>Quién atiende</Label>
               <Select value={staffId} onValueChange={setStaffId} disabled={!serviceId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Elige una persona" />
+                  <SelectValue placeholder="Escoge una persona" />
                 </SelectTrigger>
                 <SelectContent>
                   {eligibleStaff.map((s) => (
@@ -137,7 +137,7 @@ export function NewAppointmentDialog({ services, staff }: { services: ServiceOpt
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="appt-phone">Teléfono del cliente (opcional)</Label>
+            <Label htmlFor="appt-phone">Celular del cliente (opcional)</Label>
             <Input id="appt-phone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
           </div>
           <div className="space-y-1.5">
