@@ -1,3 +1,10 @@
+-- Multi-tenancy: one deployment serves many businesses.
+--
+-- This runs against databases that already hold a single business's live
+-- data, so every tenant-owned table gets its businessId in three steps —
+-- add the column nullable, backfill it, then enforce NOT NULL. Adding it as
+-- NOT NULL outright fails on any table that already has rows.
+
 -- DropIndex
 DROP INDEX "Customer_email_key";
 
@@ -11,27 +18,49 @@ DROP INDEX "Staff_active_idx";
 DROP INDEX "TimeOff_date_idx";
 
 -- AlterTable
-ALTER TABLE "Booking" ADD COLUMN     "businessId" TEXT NOT NULL;
-
--- AlterTable
 ALTER TABLE "Business" ADD COLUMN     "listed" BOOLEAN NOT NULL DEFAULT true,
 ALTER COLUMN "timezone" SET DEFAULT 'America/Bogota',
 ALTER COLUMN "currency" SET DEFAULT 'COP';
 
--- AlterTable
-ALTER TABLE "Customer" ADD COLUMN     "businessId" TEXT NOT NULL;
+-- AlterTable: add the tenant key as nullable so existing rows survive.
+ALTER TABLE "User" ADD COLUMN     "businessId" TEXT;
+ALTER TABLE "Staff" ADD COLUMN     "businessId" TEXT;
+ALTER TABLE "Service" ADD COLUMN     "businessId" TEXT;
+ALTER TABLE "TimeOff" ADD COLUMN     "businessId" TEXT;
+ALTER TABLE "Customer" ADD COLUMN     "businessId" TEXT;
+ALTER TABLE "Booking" ADD COLUMN     "businessId" TEXT;
 
--- AlterTable
-ALTER TABLE "Service" ADD COLUMN     "businessId" TEXT NOT NULL;
+-- Backfill. Before this migration the app enforced exactly one Business per
+-- deployment, so every existing row belongs to the oldest (and only) one.
+-- On a fresh database this matches nothing and does nothing.
+UPDATE "User"     SET "businessId" = (SELECT "id" FROM "Business" ORDER BY "createdAt" ASC LIMIT 1) WHERE "businessId" IS NULL;
+UPDATE "Staff"    SET "businessId" = (SELECT "id" FROM "Business" ORDER BY "createdAt" ASC LIMIT 1) WHERE "businessId" IS NULL;
+UPDATE "Service"  SET "businessId" = (SELECT "id" FROM "Business" ORDER BY "createdAt" ASC LIMIT 1) WHERE "businessId" IS NULL;
+UPDATE "TimeOff"  SET "businessId" = (SELECT "id" FROM "Business" ORDER BY "createdAt" ASC LIMIT 1) WHERE "businessId" IS NULL;
+UPDATE "Customer" SET "businessId" = (SELECT "id" FROM "Business" ORDER BY "createdAt" ASC LIMIT 1) WHERE "businessId" IS NULL;
+UPDATE "Booking"  SET "businessId" = (SELECT "id" FROM "Business" ORDER BY "createdAt" ASC LIMIT 1) WHERE "businessId" IS NULL;
 
--- AlterTable
-ALTER TABLE "Staff" ADD COLUMN     "businessId" TEXT NOT NULL;
+-- Anything still NULL here had no Business at all to belong to, which the
+-- old app could never render. Nothing legitimate can be in this state; the
+-- deletes only fire on already-broken data, and they run child-first so the
+-- foreign keys below hold.
+DELETE FROM "Booking"      WHERE "businessId" IS NULL;
+DELETE FROM "Customer"     WHERE "businessId" IS NULL;
+DELETE FROM "TimeOff"      WHERE "businessId" IS NULL;
+DELETE FROM "Availability" WHERE "staffId" IN (SELECT "id" FROM "Staff" WHERE "businessId" IS NULL);
+DELETE FROM "ServiceStaff" WHERE "staffId" IN (SELECT "id" FROM "Staff" WHERE "businessId" IS NULL)
+                              OR "serviceId" IN (SELECT "id" FROM "Service" WHERE "businessId" IS NULL);
+DELETE FROM "Service"      WHERE "businessId" IS NULL;
+DELETE FROM "Staff"        WHERE "businessId" IS NULL;
+DELETE FROM "User"         WHERE "businessId" IS NULL;
 
--- AlterTable
-ALTER TABLE "TimeOff" ADD COLUMN     "businessId" TEXT NOT NULL;
-
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "businessId" TEXT NOT NULL;
+-- Now the column can carry its real constraint.
+ALTER TABLE "User"     ALTER COLUMN "businessId" SET NOT NULL;
+ALTER TABLE "Staff"    ALTER COLUMN "businessId" SET NOT NULL;
+ALTER TABLE "Service"  ALTER COLUMN "businessId" SET NOT NULL;
+ALTER TABLE "TimeOff"  ALTER COLUMN "businessId" SET NOT NULL;
+ALTER TABLE "Customer" ALTER COLUMN "businessId" SET NOT NULL;
+ALTER TABLE "Booking"  ALTER COLUMN "businessId" SET NOT NULL;
 
 -- CreateIndex
 CREATE INDEX "Booking_businessId_startsAt_idx" ON "Booking"("businessId", "startsAt");
@@ -74,4 +103,3 @@ ALTER TABLE "Customer" ADD CONSTRAINT "Customer_businessId_fkey" FOREIGN KEY ("b
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "Business"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
