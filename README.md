@@ -147,8 +147,12 @@ The URL comes from the business name and is editable later at
 **/admin/settings → General → Dirección web**. Changing it breaks previously
 shared links, so settle on it early.
 
-`npm run db:seed` creates all fifteen sector demos at once from a local
-checkout, plus the platform account.
+**Filling the demo library takes one click, not fifteen trips through the
+creator.** `/admin/negocios` offers *"Crear las N demos que faltan"*, which
+creates one agenda per sector straight from the presets — names, colors,
+services, prices, team and hours all come with them, so there is nothing to
+type. The creator is for a client's real branding; that button is for stock.
+`npm run db:seed` does the same from a local checkout.
 
 ### Industry presets
 

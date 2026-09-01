@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { INDUSTRIES } from "@/lib/industries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AgendaRow } from "./AgendaRow";
+import { FillLibraryButton } from "./FillLibraryButton";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +38,12 @@ export default async function NegociosPage() {
   const demos = businesses.filter((b) => b._count.users === 0);
   const clients = businesses.filter((b) => b._count.users > 0);
 
+  // Sectors with no stock demo yet — what the one-click button would create.
+  const present = new Set(businesses.map((b) => b.name.trim().toLowerCase()));
+  const missing = INDUSTRIES.filter(
+    (i) => !present.has(i.defaultBusinessName.trim().toLowerCase())
+  ).length;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -46,12 +54,30 @@ export default async function NegociosPage() {
             equipo, horarios y marca — con esta misma cuenta.
           </p>
         </div>
-        <Button asChild variant="brand">
-          <Link href="/admin/negocios/nueva">
-            <Plus className="mr-1 h-4 w-4" /> Nueva agenda
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <FillLibraryButton missing={missing} />
+          <Button asChild variant="brand">
+            <Link href="/admin/negocios/nueva">
+              <Plus className="mr-1 h-4 w-4" /> Nueva agenda
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      {demos.length === 0 && missing > 0 ? (
+        <Card>
+          <CardContent className="space-y-3 py-10 text-center">
+            <h2 className="text-lg font-bold">Empieza con la biblioteca de demos</h2>
+            <p className="mx-auto max-w-md text-sm text-muted-foreground">
+              Una agenda por sector, con sus servicios, precios, equipo y horarios ya cargados. No hay
+              nada que escribir: cada una queda lista con su enlace para compartir.
+            </p>
+            <div className="flex justify-center pt-1">
+              <FillLibraryButton missing={missing} />
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Group
         title="Demos para vender"

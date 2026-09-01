@@ -4,6 +4,48 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSessionCookie, requirePlatformAdmin, requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { INDUSTRIES } from "@/lib/industries";
+import { ProvisionError, provisionBusiness } from "@/lib/provision";
+
+/**
+ * Fills the demo library in one click: one agenda per sector that doesn't
+ * already have one.
+ *
+ * Building your own demos through the five-step creator is pointless typing —
+ * the preset already knows the name, the colors, the services, the prices,
+ * the team and the hours. The creator exists for a client's real branding;
+ * this exists for stock.
+ *
+ * Skips sectors already present, so it can be run again after adding a new
+ * preset and only fills the gap.
+ */
+export async function createMissingDemos() {
+  await requirePlatformAdmin();
+
+  const existing = await prisma.business.findMany({ select: { name: true } });
+  const taken = new Set(existing.map((b) => b.name.trim().toLowerCase()));
+
+  const created: string[] = [];
+  for (const industry of INDUSTRIES) {
+    if (taken.has(industry.defaultBusinessName.trim().toLowerCase())) continue;
+    try {
+      const result = await provisionBusiness(prisma, {
+        industryKey: industry.key,
+        createOwnerUser: false,
+        listed: true,
+      });
+      created.push(result.businessName);
+    } catch (err) {
+      // One bad preset shouldn't abandon the rest half-built.
+      if (err instanceof ProvisionError) continue;
+      throw err;
+    }
+  }
+
+  revalidatePath("/admin/negocios");
+  revalidatePath("/");
+  return { created: created.length, names: created };
+}
 
 /**
  * Points the current session at another business. This is the one place a
