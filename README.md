@@ -2,12 +2,19 @@
 
 A white-label appointment booking platform built to be resold and re-skinned
 for different service businesses (salons, barbershops, clinics, studios,
-consultants, etc). One codebase, one deployment per client — each client gets
-their own database and their own branding, all editable from an admin
-dashboard with no code changes.
+consultants, etc).
+
+**One deployment serves every client.** Each business gets its own URL —
+`tudominio.com/salon-aurora`, `tudominio.com/barberia-el-roble` — with its
+own branding, services, staff, hours and customers, all editable from an
+admin dashboard with no code changes. Adding a client is a form submission,
+not a deploy.
 
 ## What's included
 
+- **A URL per business** — every client books at `/su-negocio`, on the same
+  deployment and the same database. Signing in as one business shows only
+  that business's data; see **Tenant isolation** below.
 - **Public booking site** — service list, staff picker, real-time available
   time slots, booking form, email confirmation with a calendar (.ics)
   attachment, and a no-login "manage my appointment" cancel link.
@@ -21,8 +28,9 @@ dashboard with no code changes.
 - **Fully themeable visuals** — every brand color, font, and piece of copy
   lives in the database and is rendered through CSS custom properties. A
   client rebrands their site from a settings form; you never touch code.
-- **Email** — booking confirmations, cancellations, and 24-hour reminders via
-  [Resend](https://resend.com), built with React Email.
+- **Email** — booking confirmations, cancellations, and appointment reminders
+  via [Resend](https://resend.com), built with React Email. Every email is
+  branded with the business the customer actually booked with.
 - **Auth** — simple, self-contained session auth (bcrypt + signed JWT
   cookies) for the admin dashboard. No third-party auth service required.
 
@@ -46,17 +54,23 @@ Prerequisites: Node 20.9+, a Postgres 16+ database (local or hosted).
 npm install
 cp .env.example .env      # fill in DATABASE_URL / DIRECT_URL at minimum
 npm run db:migrate        # apply migrations (creates tables + the anti-double-booking constraint)
-npm run db:seed           # creates a demo business, services, staff, and your first admin login
+npm run db:seed           # creates ten demo businesses, one per industry
 npm run dev
 ```
 
-The seed script prints the admin login it creates (defaults to
+The seed creates one business per industry preset, each at its own URL, so
+`/` opens as a showcase you can walk a prospect through. It prints every
+business it created and the admin login for the first one (defaults to
 `owner@example.com` / `changeme123` — override with `SEED_OWNER_EMAIL` /
 `SEED_OWNER_PASSWORD` in `.env` before seeding). Sign in at `/admin`.
 
-## Deploying a new client (Vercel + Neon)
+Re-running the seed is safe: businesses whose owner email already exists are
+skipped.
 
-This is the repeatable process for selling/deploying this to a new business.
+## Deploying (Vercel + Neon)
+
+You do this **once**. After that, adding a client is step 3 repeated — no
+new project, no new database, no redeploy.
 
 ### 1. Create the database
 
@@ -69,7 +83,7 @@ This is the repeatable process for selling/deploying this to a new business.
 
 ### 2. Deploy to Vercel
 
-1. Push this repo to GitHub (or fork it per client) and import it in Vercel.
+1. Push this repo to GitHub and import it in Vercel.
 2. Add environment variables in the Vercel project settings — see
    `.env.example` for the full list. At minimum: `DATABASE_URL`,
    `DIRECT_URL`, `SESSION_SECRET`, `NEXT_PUBLIC_APP_URL` (your Vercel URL or
@@ -79,24 +93,31 @@ This is the repeatable process for selling/deploying this to a new business.
    anti-double-booking constraint are created on every deploy with no
    manual migration step.
 
-### 3. Run setup — in the browser, no local machine needed
+### 3. Add a business — in the browser, no local machine needed
 
-The app has no `Business`/`User` row until this runs once. Open
-**`https://your-app.vercel.app/setup`** and fill in the form:
+Open **`https://your-app.vercel.app/setup`** and fill in the form:
 
 - **Sector del negocio** — picks an industry preset (see below).
 - **Nombre del negocio** — leave blank to use the preset's example name.
-- **Correo / contraseña** — becomes the client's admin login.
+- **Correo / contraseña** — becomes that client's admin login.
 - **Clave de instalación** — the `SETUP_SECRET` you set in step 2.
 
-Submitting creates the business, the admin user, and a full set of demo
-services, staff and working hours for that industry. The page
-**permanently disables itself** once it succeeds, so it's safe to leave
-deployed.
+Submitting creates the business, its admin user, and a full set of demo
+services, staff and working hours for that industry, then hands you the
+client's booking URL (`/su-negocio`). That URL is what you give the client.
+
+**Run this once per client.** The page stays available precisely because
+adding the next business is the same form again; `SETUP_SECRET` is what
+stops anyone else from using it, so treat it like a password. Each owner
+email can only be used once.
+
+The client's URL comes from their business name and is editable later at
+**/admin/settings → General → Dirección web**. Changing it breaks previously
+shared links, so settle on it early.
 
 Automating instead? `/api/setup` also accepts GET with query params
 (`secret`, `email`, `password`, `business`, `industry`), and
-`npm run db:seed` does the same from a local checkout.
+`npm run db:seed` seeds all ten presets at once from a local checkout.
 
 ### Industry presets
 
@@ -107,9 +128,14 @@ barbería · peluquería y salón de belleza · spa y estética · clínica dent
 · consultorio médico · salón de uñas · estudio de tatuajes · entrenamiento
 personal · veterinaria · consultoría
 
-This exists to make selling easier: spin up a separate deployment per
-vertical and each one opens as a believable demo of that business rather
-than placeholder text. Add or edit presets by editing that one file.
+This exists to make selling easier. `npm run db:seed` creates one business
+per preset, so `/` becomes a directory of ten live demos — a prospect in any
+of those trades can click straight into a booking page that looks like
+theirs rather than placeholder text. Add or edit presets in that one file.
+
+A real client usually shouldn't sit in that public directory: turn off
+**/admin/settings → General → Visibilidad** and their page still works at
+its URL, it just stops being listed on the front page.
 
 > **Note on passwords:** there's no self-service password reset yet (see
 > **Known limitations**). Pick the client's password carefully at setup, or
@@ -148,12 +174,20 @@ to their name on the Staff page).
   for active bookings. Two concurrent requests for the same slot cannot both
   succeed — the second gets a clean 409 response — even though the
   application-level check alone would have a race window.
-- **Single business per deployment, on purpose.** This is a white-label
-  product: each client gets their own database, so there's exactly one
-  `Business` row. That's a deliberate simplification over multi-tenant
-  SaaS — it removes an entire class of "which tenant is this?" bugs and
-  keeps every query simple, at the cost of needing a separate deploy per
-  client (which the steps above make quick).
+- **Tenant isolation.** Every tenant-owned row (`User`, `Staff`, `Service`,
+  `Customer`, `Booking`, `TimeOff`) carries a `businessId`, and there are
+  exactly two ways to establish which business a request is in: public pages
+  resolve it from the URL slug (`getBusinessBySlug`), and admin pages
+  resolve it from the signed-in session (`requireBusinessSession`). Nothing
+  loads a business any other way. Ids arriving from the browser are never
+  trusted: every admin read is filtered by `businessId`, and every admin
+  mutation confirms ownership before it writes, so another business's id
+  simply doesn't resolve. `tests/` proves this against a running server —
+  see below.
+- **Customers are per business.** The unique key is
+  `(businessId, email)`, not `email`, so the same person booking at two
+  different businesses is two independent customer records. Neither
+  business sees the other's history.
 - **Timezones.** All scheduling math (weekly availability, slot generation,
   minimum notice, max advance window) is done in the business's configured
   IANA timezone (`Business.timezone`) via `date-fns-tz`, then stored in
@@ -162,13 +196,40 @@ to their name on the Staff page).
 - **Auth.** Admin sessions are a signed JWT (via `jose`) in an httpOnly
   cookie, checked in `src/proxy.ts` (Next.js 16 renamed `middleware.ts` to
   `proxy.ts`) on every `/admin/*` request, with a second check in
-  `requireSession()` on the server for defense in depth. Passwords are
-  hashed with bcrypt. There's intentionally no third-party auth dependency.
+  `requireBusinessSession()` on the server for defense in depth. The session
+  carries the `businessId`, so an admin session is bound to one business and
+  cannot be pointed at another. Passwords are hashed with bcrypt. There's
+  intentionally no third-party auth dependency.
+
+## Tenant isolation tests
+
+Because one deployment now holds every client's data, "business A cannot see
+or touch business B" is the property that must never regress. `tests/` backs
+it with 56 assertions against a real build and a real database — cross-tenant
+ids on every public API, cross-tenant slugs on every public page, and every
+admin server action invoked for real with another business's ids, then the
+database checked to confirm nothing moved.
+
+```bash
+node tests/tenant-isolation.mjs          # public surface
+node tests/tenant-isolation-actions.mjs  # admin server actions
+```
+
+See `tests/README.md` for the setup they need. Run them after any change to
+a query, a route, or the session.
 
 ## Known limitations / good next additions
 
-- Single admin account per deployment (no multi-user staff logins yet, no
-  in-app password reset — see step 3 above).
+- One admin account per business (no multi-user staff logins yet, no in-app
+  password reset — set the password carefully at setup, or change it later
+  via Prisma Studio).
+- Adding a business requires `SETUP_SECRET`; there's no self-service signup,
+  which is deliberate for a reseller product but means you onboard each
+  client yourself.
+- Businesses share one database. That's what makes a single deployment work,
+  but it also means a client's data lives alongside other clients' — if you
+  sell to someone who contractually requires physical separation, give them
+  their own deployment.
 - No reschedule flow yet — customers cancel and rebook; admins can edit an
   appointment's status but not drag-and-drop reschedule.
 - Logo/favicon are set by URL, not file upload (paste a link to an image
@@ -190,8 +251,15 @@ src/emails/                   React Email templates
 src/components/ui/            Hand-built, Radix-based UI primitives (themeable)
 src/components/booking/       Public booking flow components
 src/components/admin/         Admin-only shared components
-src/app/(public pages)        /, /book/[serviceId], /confirmation/[id], /manage/[token]
-src/app/admin/(dashboard)/    Authenticated admin dashboard
+src/lib/business.ts           How a request resolves which business it's in
+src/lib/industries.ts         The ten industry presets
+src/lib/provision.ts          Creates a business + its demo data
+src/app/page.tsx              Public directory of all listed businesses
+src/app/[slug]/               One business's public booking site
+src/app/manage/[token]/       No-login cancel page (business comes from the booking)
+src/app/setup/                Add-a-business form (SETUP_SECRET gated)
+src/app/admin/(dashboard)/    Authenticated admin dashboard, scoped to one business
 src/app/api/public/           Booking creation, availability, cancellation
-src/app/api/cron/reminders/   24-hour email reminder job (see vercel.json)
+src/app/api/cron/reminders/   Daily email reminder job, all businesses (see vercel.json)
+tests/                        Tenant isolation tests
 ```

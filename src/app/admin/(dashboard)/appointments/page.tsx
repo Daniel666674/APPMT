@@ -3,7 +3,7 @@ import { addDays, format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatBusinessTime } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
+import { requireBusinessSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { fromZonedTime } from "date-fns-tz";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +18,7 @@ export default async function AppointmentsPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date: dateParam } = await searchParams;
-  const business = await getBusiness();
+  const { business, businessId } = await requireBusinessSession();
   const date = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : format(new Date(), "yyyy-MM-dd");
 
   const dayStart = fromZonedTime(`${date}T00:00:00`, business.timezone);
@@ -26,12 +26,12 @@ export default async function AppointmentsPage({
 
   const [bookings, services, staff] = await Promise.all([
     prisma.booking.findMany({
-      where: { startsAt: { gte: dayStart, lte: dayEnd } },
+      where: { businessId, startsAt: { gte: dayStart, lte: dayEnd } },
       orderBy: { startsAt: "asc" },
       include: { service: true, staff: true, customer: true },
     }),
-    prisma.service.findMany({ where: { active: true }, include: { staff: true } }),
-    prisma.staff.findMany({ where: { active: true } }),
+    prisma.service.findMany({ where: { businessId, active: true }, include: { staff: true } }),
+    prisma.staff.findMany({ where: { businessId, active: true } }),
   ]);
 
   const prevDate = format(subDays(new Date(`${date}T00:00:00`), 1), "yyyy-MM-dd");

@@ -1,7 +1,6 @@
 import { addHours } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
 import { formatBusinessDate, formatBusinessTime } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
 import { prisma } from "@/lib/db";
 import { sendBookingReminderEmail } from "@/lib/email";
 
@@ -16,6 +15,10 @@ import { sendBookingReminderEmail } from "@/lib/email";
  *
  * On a paid plan you can tighten this: set the schedule to hourly and
  * narrow the window back down for more precise 24-hour reminders.
+ *
+ * One sweep covers every business on the deployment. Each booking carries
+ * its own business, so the timezone, branding and address in the email are
+ * always the ones the customer actually booked with.
  */
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -26,7 +29,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const business = await getBusiness();
   const now = new Date();
   const windowEnd = addHours(now, 36);
 
@@ -36,13 +38,14 @@ export async function GET(request: NextRequest) {
       reminderSentAt: null,
       startsAt: { gte: now, lte: windowEnd },
     },
-    include: { service: true, staff: true, customer: true },
+    include: { service: true, staff: true, customer: true, business: true },
   });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin;
   let sent = 0;
 
   for (const booking of bookings) {
+    const business = booking.business;
     try {
       await sendBookingReminderEmail({
         businessName: business.name,

@@ -28,7 +28,13 @@ export async function login(_prevState: LoginState | undefined, formData: FormDa
     return { error: "Correo o contraseña incorrectos" };
   }
 
-  await createSessionCookie({ userId: user.id, email: user.email, name: user.name, role: user.role });
+  await createSessionCookie({
+    userId: user.id,
+    businessId: user.businessId,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+  });
 
   const next = formData.get("next");
   redirect(typeof next === "string" && next.startsWith("/admin") ? next : "/admin");

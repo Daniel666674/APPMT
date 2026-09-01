@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getBusinessOrNull } from "@/lib/business";
+import { countBusinesses } from "@/lib/business";
 import { INDUSTRIES, DEFAULT_INDUSTRY_KEY } from "@/lib/industries";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,41 +11,29 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Configuración inicial" };
 
 /**
- * Formulario de configuración inicial. Reemplaza el tener que armar a mano
- * una URL con parámetros: se elige el sector, se llenan cuatro campos y el
- * negocio queda creado con servicios, equipo y horarios de ejemplo.
+ * Alta de un negocio. Un mismo despliegue atiende a varios clientes, así que
+ * este formulario se usa una vez por negocio: se elige el sector, se llenan
+ * cuatro campos y queda creado con su propia URL, servicios, equipo y
+ * horarios de ejemplo.
  */
 export default async function SetupPage() {
-  const business = await getBusinessOrNull();
-
-  if (business) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
-        <Card className="w-full max-w-md">
-          <CardContent className="space-y-4 py-10 text-center">
-            <h1 className="text-xl font-bold">Ya está configurado</h1>
-            <p className="text-sm text-muted-foreground">
-              «{business.name}» ya tiene su negocio y usuario creados. Esta página solo funciona una vez.
-            </p>
-            <Button asChild variant="brand">
-              <Link href="/admin">Ir al panel</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const existing = await countBusinesses();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-4 py-12">
       <Card className="w-full max-w-xl">
         <CardContent className="space-y-6 py-10">
           <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Configuración inicial</p>
-            <h1 className="text-2xl font-bold">Pon en marcha tu agenda</h1>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Alta de negocio</p>
+            <h1 className="text-2xl font-bold">Crea una agenda nueva</h1>
             <p className="text-sm text-muted-foreground">
               Elige el sector y creamos los servicios, el equipo y los horarios de ejemplo para que veas la
               agenda funcionando desde el primer minuto. Todo se puede cambiar después.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              El negocio queda publicado en su propia URL —{" "}
+              <code className="rounded bg-secondary px-1 py-0.5 text-xs">/nombre-del-negocio</code> — y ese es el
+              enlace que le pasas al cliente. Puedes repetir este paso para cada negocio que vendas.
             </p>
           </div>
 
@@ -96,9 +84,19 @@ export default async function SetupPage() {
             </div>
 
             <Button type="submit" variant="brand" className="w-full">
-              Crear mi agenda
+              Crear la agenda
             </Button>
           </form>
+
+          {existing > 0 ? (
+            <p className="text-center text-xs text-muted-foreground">
+              Ya hay {existing} {existing === 1 ? "negocio" : "negocios"} en este despliegue.{" "}
+              <Link href="/" className="underline underline-offset-2">
+                Ver el directorio
+              </Link>
+              .
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     </div>

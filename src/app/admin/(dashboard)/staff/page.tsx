@@ -1,11 +1,13 @@
+import { requireBusinessSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StaffTable } from "./StaffTable";
 
 export default async function StaffPage() {
+  const { businessId } = await requireBusinessSession();
   const [staff, services] = await Promise.all([
-    prisma.staff.findMany({ orderBy: { sortOrder: "asc" }, include: { services: true } }),
-    prisma.service.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.staff.findMany({ where: { businessId }, orderBy: { sortOrder: "asc" }, include: { services: true } }),
+    prisma.service.findMany({ where: { businessId, active: true }, orderBy: { sortOrder: "asc" } }),
   ]);
 
   return (

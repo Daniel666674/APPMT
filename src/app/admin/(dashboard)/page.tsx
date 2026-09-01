@@ -2,14 +2,14 @@ import Link from "next/link";
 import { endOfDay, endOfWeek, startOfDay, startOfWeek } from "date-fns";
 import { CalendarDays, TrendingUp, Users, Clock } from "lucide-react";
 import { formatBusinessDate, formatBusinessTime } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
+import { requireBusinessSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 export default async function AdminDashboardPage() {
-  const business = await getBusiness();
+  const { business, businessId } = await requireBusinessSession();
   const now = new Date();
   const todayStart = startOfDay(now);
   const todayEnd = endOfDay(now);
@@ -18,14 +18,14 @@ export default async function AdminDashboardPage() {
 
   const [todayCount, weekCount, customerCount, upcoming] = await Promise.all([
     prisma.booking.count({
-      where: { startsAt: { gte: todayStart, lte: todayEnd }, status: { in: ["CONFIRMED", "PENDING"] } },
+      where: { businessId, startsAt: { gte: todayStart, lte: todayEnd }, status: { in: ["CONFIRMED", "PENDING"] } },
     }),
     prisma.booking.count({
-      where: { startsAt: { gte: weekStart, lte: weekEnd }, status: { in: ["CONFIRMED", "PENDING"] } },
+      where: { businessId, startsAt: { gte: weekStart, lte: weekEnd }, status: { in: ["CONFIRMED", "PENDING"] } },
     }),
-    prisma.customer.count(),
+    prisma.customer.count({ where: { businessId } }),
     prisma.booking.findMany({
-      where: { startsAt: { gte: now }, status: { in: ["CONFIRMED", "PENDING"] } },
+      where: { businessId, startsAt: { gte: now }, status: { in: ["CONFIRMED", "PENDING"] } },
       orderBy: { startsAt: "asc" },
       take: 6,
       include: { service: true, staff: true, customer: true },

@@ -13,6 +13,7 @@ export const loginSchema = z.object({
 });
 
 export const createBookingSchema = z.object({
+  slug: z.string().min(1),
   serviceId: z.string().min(1),
   staffId: z.string().min(1),
   startsAt: z.string().datetime({ message: "Hora de inicio inválida" }),
@@ -24,6 +25,7 @@ export const createBookingSchema = z.object({
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 
 export const availabilityQuerySchema = z.object({
+  slug: z.string().min(1),
   serviceId: z.string().min(1),
   staffId: z.string().min(1).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe tener el formato AAAA-MM-DD"),
@@ -87,6 +89,14 @@ export const adminCreateBookingSchema = z.object({
 
 export const businessSettingsSchema = z.object({
   name: z.string().trim().min(1).max(120),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2, "La dirección web debe tener al menos 2 caracteres")
+    .max(60, "La dirección web es demasiado larga")
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Usa solo letras, números y guiones (por ejemplo: salon-aurora)"),
+  listed: z.boolean().optional(),
   timezone: z.string().min(1),
   currency: z.string().min(1).max(10),
   contactEmail: emailSchema.optional().or(z.literal("")),

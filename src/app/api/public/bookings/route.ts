@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAvailableSlots, formatBusinessDate, formatBusinessTime, staffCanPerformService } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
+import { getAvailableSlots, formatBusinessDate, formatBusinessTime } from "@/lib/availability";
+import { getBusinessBySlug } from "@/lib/business";
 import { prisma } from "@/lib/db";
 import { sendBookingConfirmationEmail, sendNewBookingNoticeEmail } from "@/lib/email";
 import { clientIpFrom, rateLimit } from "@/lib/rate-limit";
@@ -20,20 +20,30 @@ export async function POST(request: NextRequest) {
   }
   const input = parsed.data;
 
-  const business = await getBusiness();
-  const service = await prisma.service.findUnique({ where: { id: input.serviceId } });
-  if (!service || !service.active) {
+  const business = await getBusinessBySlug(input.slug);
+  if (!business) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+
+  // Both the service and the staff member are looked up scoped to this
+  // business, so ids belonging to another tenant simply don't resolve.
+  const service = await prisma.service.findFirst({
+    where: { id: input.serviceId, businessId: business.id, active: true },
+  });
+  if (!service) {
     return NextResponse.json({ error: "Este servicio ya no está disponible." }, { status: 404 });
   }
 
-  const eligible = await staffCanPerformService(input.staffId, input.serviceId);
-  if (!eligible) {
-    return NextResponse.json({ error: "Esta persona no realiza este servicio." }, { status: 400 });
+  const staff = await prisma.staff.findFirst({
+    where: { id: input.staffId, businessId: business.id, active: true },
+  });
+  if (!staff) {
+    return NextResponse.json({ error: "Esta persona no está disponible." }, { status: 400 });
   }
 
-  const staff = await prisma.staff.findUnique({ where: { id: input.staffId } });
-  if (!staff || !staff.active) {
-    return NextResponse.json({ error: "Esta persona no está disponible." }, { status: 400 });
+  const eligible = await prisma.serviceStaff.findUnique({
+    where: { serviceId_staffId: { serviceId: service.id, staffId: staff.id } },
+  });
+  if (!eligible) {
+    return NextResponse.json({ error: "Esta persona no realiza este servicio." }, { status: 400 });
   }
 
   const requestedStart = new Date(input.startsAt);
@@ -44,28 +54,31 @@ export async function POST(request: NextRequest) {
   // time off, minimum notice, max advance window, and no double-booking.
   const slots = await getAvailableSlots({
     business,
-    staffId: input.staffId,
+    staffId: staff.id,
     serviceDurationMinutes: service.durationMinutes,
     date: localDate,
   });
   const match = slots.find((s) => s.start === requestedStart.toISOString());
   if (!match) {
-    return NextResponse.json(
-      { error: "Ese horario ya no está disponible. Elige otro." },
-      { status: 409 }
-    );
+    return NextResponse.json({ error: "Ese horario ya no está disponible. Elige otro." }, { status: 409 });
   }
 
   const customer = await prisma.customer.upsert({
-    where: { email: input.customerEmail },
+    where: { businessId_email: { businessId: business.id, email: input.customerEmail } },
     update: { name: input.customerName, phone: input.customerPhone || undefined },
-    create: { name: input.customerName, email: input.customerEmail, phone: input.customerPhone || undefined },
+    create: {
+      businessId: business.id,
+      name: input.customerName,
+      email: input.customerEmail,
+      phone: input.customerPhone || undefined,
+    },
   });
 
   let booking;
   try {
     booking = await prisma.booking.create({
       data: {
+        businessId: business.id,
         serviceId: service.id,
         staffId: staff.id,
         customerId: customer.id,
@@ -80,10 +93,7 @@ export async function POST(request: NextRequest) {
     // the database-level exclusion constraint (see prisma/migrations) is
     // the real guarantee against double-booking.
     console.error("[bookings] insert failed, likely a slot race:", err);
-    return NextResponse.json(
-      { error: "Alguien acaba de reservar ese horario. Elige otro." },
-      { status: 409 }
-    );
+    return NextResponse.json({ error: "Alguien acaba de reservar ese horario. Elige otro." }, { status: 409 });
   }
 
   const dateLabel = formatBusinessDate(booking.startsAt, business.timezone);
@@ -122,11 +132,11 @@ export async function POST(request: NextRequest) {
 }
 
 function formatInBusinessTz(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
+  // en-CA formats as YYYY-MM-DD, which is what the availability engine wants.
+  return new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).format(date);
-  return parts; // en-CA locale formats as YYYY-MM-DD
 }

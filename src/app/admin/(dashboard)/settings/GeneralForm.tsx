@@ -12,6 +12,8 @@ import { updateBusinessProfile } from "./actions";
 
 interface Props {
   name: string;
+  slug: string;
+  listed: boolean;
   timezone: string;
   currency: string;
   contactEmail: string;
@@ -80,6 +82,24 @@ export function GeneralForm({ initial }: { initial: Props }) {
           <div className="space-y-1.5">
             <Label htmlFor="name">Nombre del negocio</Label>
             <Input id="name" value={values.name} onChange={(e) => set("name", e.target.value)} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="slug">Dirección web</Label>
+            <div className="flex items-center gap-1">
+              <span className="shrink-0 text-sm text-muted-foreground">/</span>
+              <Input
+                id="slug"
+                value={values.slug}
+                onChange={(e) => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+                required
+                className="font-mono"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Tu página de reservas vive en{" "}
+              <span className="font-mono">/{values.slug || "tu-negocio"}</span>. Si la cambias, los enlaces
+              anteriores dejarán de funcionar.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="timezone">Zona horaria</Label>
@@ -208,6 +228,20 @@ export function GeneralForm({ initial }: { initial: Props }) {
           <div className="flex items-center gap-2 pt-6">
             <Switch checked={values.requirePhone} onCheckedChange={(v) => set("requirePhone", v)} />
             <Label>Exigir teléfono al reservar</Label>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold text-muted-foreground">Visibilidad</h3>
+        <div className="flex items-start gap-3">
+          <Switch checked={values.listed} onCheckedChange={(v) => set("listed", v)} />
+          <div className="space-y-0.5">
+            <Label>Aparecer en el directorio público</Label>
+            <p className="text-xs text-muted-foreground">
+              Apágalo si solo quieres que se llegue a tu agenda por el enlace directo. Tu página de reservas
+              sigue funcionando igual; simplemente deja de listarse en la portada.
+            </p>
           </div>
         </div>
       </section>

@@ -1,26 +1,30 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth";
-import { formatBusinessDate, formatBusinessTime, staffCanPerformService } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
+import { requireBusinessSession } from "@/lib/auth";
+import { formatBusinessDate, formatBusinessTime } from "@/lib/availability";
 import { prisma } from "@/lib/db";
 import { sendBookingCancelledEmail, sendBookingConfirmationEmail } from "@/lib/email";
 import { adminCreateBookingSchema } from "@/lib/validations";
 
 export async function createAppointment(input: unknown) {
-  await requireSession();
+  const { business, businessId } = await requireBusinessSession();
   const parsed = adminCreateBookingSchema.safeParse(input);
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Datos inválidos");
   const data = parsed.data;
 
-  const [service, staff, eligible] = await Promise.all([
-    prisma.service.findUnique({ where: { id: data.serviceId } }),
-    prisma.staff.findUnique({ where: { id: data.staffId } }),
-    staffCanPerformService(data.staffId, data.serviceId),
+  // Both lookups are scoped to this business, so ids from another tenant
+  // simply don't resolve.
+  const [service, staff] = await Promise.all([
+    prisma.service.findFirst({ where: { id: data.serviceId, businessId } }),
+    prisma.staff.findFirst({ where: { id: data.staffId, businessId } }),
   ]);
   if (!service) throw new Error("Servicio no encontrado");
   if (!staff) throw new Error("Persona no encontrada");
+
+  const eligible = await prisma.serviceStaff.findUnique({
+    where: { serviceId_staffId: { serviceId: service.id, staffId: staff.id } },
+  });
   if (!eligible) throw new Error("Esta persona no realiza este servicio");
 
   const startsAt = new Date(data.startsAt);
@@ -37,15 +41,21 @@ export async function createAppointment(input: unknown) {
   if (overlap) throw new Error("Esta persona ya tiene una cita a esa hora.");
 
   const customer = await prisma.customer.upsert({
-    where: { email: data.customerEmail },
+    where: { businessId_email: { businessId, email: data.customerEmail } },
     update: { name: data.customerName, phone: data.customerPhone || undefined },
-    create: { name: data.customerName, email: data.customerEmail, phone: data.customerPhone || undefined },
+    create: {
+      businessId,
+      name: data.customerName,
+      email: data.customerEmail,
+      phone: data.customerPhone || undefined,
+    },
   });
 
   let booking;
   try {
     booking = await prisma.booking.create({
       data: {
+        businessId,
         serviceId: service.id,
         staffId: staff.id,
         customerId: customer.id,
@@ -60,7 +70,6 @@ export async function createAppointment(input: unknown) {
   }
 
   if (booking.status === "CONFIRMED") {
-    const business = await getBusiness();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
     await sendBookingConfirmationEmail({
       businessName: business.name,
@@ -84,10 +93,11 @@ export async function createAppointment(input: unknown) {
 }
 
 export async function updateAppointmentStatus(id: string, status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW") {
-  await requireSession();
+  const { business, businessId } = await requireBusinessSession();
 
-  const booking = await prisma.booking.findUnique({
-    where: { id },
+  // Scoped: a booking id from another business must not resolve.
+  const booking = await prisma.booking.findFirst({
+    where: { id, businessId },
     include: { service: true, staff: true, customer: true },
   });
   if (!booking) throw new Error("Cita no encontrada");
@@ -101,7 +111,6 @@ export async function updateAppointmentStatus(id: string, status: "PENDING" | "C
   });
 
   if (status === "CANCELLED" && booking.status !== "CANCELLED") {
-    const business = await getBusiness();
     await sendBookingCancelledEmail({
       businessName: business.name,
       logoUrl: business.logoUrl,
@@ -112,7 +121,7 @@ export async function updateAppointmentStatus(id: string, status: "PENDING" | "C
       staffName: booking.staff.name,
       dateLabel: formatBusinessDate(booking.startsAt, business.timezone),
       timeLabel: formatBusinessTime(booking.startsAt, business.timezone),
-      bookAgainUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/book/${booking.serviceId}`,
+      bookAgainUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/${business.slug}/book/${booking.serviceId}`,
     }).catch((err) => console.error("[email] admin cancellation failed:", err));
   }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  ExternalLink,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -29,11 +30,13 @@ const NAV_ITEMS = [
 
 export function AdminShell({
   businessName,
+  businessSlug,
   logoUrl,
   userName,
   children,
 }: {
   businessName: string;
+  businessSlug: string;
   logoUrl?: string | null;
   userName: string;
   children: React.ReactNode;
@@ -77,6 +80,13 @@ export function AdminShell({
         </div>
         {nav}
         <div className="mt-auto space-y-2 px-4 pt-6">
+          <Link
+            href={`/${businessSlug}`}
+            target="_blank"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <ExternalLink className="h-3.5 w-3.5" /> Ver mi página de reservas
+          </Link>
           <p className="truncate text-xs text-muted-foreground">Sesión de {userName}</p>
           <form action={logout}>
             <Button type="submit" variant="outline" size="sm" className="w-full">

@@ -2,22 +2,28 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarCheck } from "lucide-react";
 import { formatBusinessDate, formatBusinessTime } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
+import { getBusinessBySlug } from "@/lib/business";
 import { prisma } from "@/lib/db";
 import { SiteHeader } from "@/components/booking/SiteHeader";
 import { SiteFooter } from "@/components/booking/SiteFooter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default async function ConfirmationPage({ params }: { params: Promise<{ bookingId: string }> }) {
-  const { bookingId } = await params;
-  const business = await getBusiness();
+export const dynamic = "force-dynamic";
 
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
+export default async function ConfirmationPage({
+  params,
+}: {
+  params: Promise<{ slug: string; bookingId: string }>;
+}) {
+  const { slug, bookingId } = await params;
+  const business = await getBusinessBySlug(slug);
+  if (!business) notFound();
+
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, businessId: business.id },
     include: { service: true, staff: true, customer: true },
   });
-
   if (!booking) notFound();
 
   return (
@@ -46,7 +52,7 @@ export default async function ConfirmationPage({ params }: { params: Promise<{ b
                 <Link href={`/manage/${booking.manageToken}`}>Gestionar mi cita</Link>
               </Button>
               <Button asChild variant="ghost">
-                <Link href="/">Volver al inicio</Link>
+                <Link href={`/${business.slug}`}>Volver al inicio</Link>
               </Button>
             </div>
           </CardContent>

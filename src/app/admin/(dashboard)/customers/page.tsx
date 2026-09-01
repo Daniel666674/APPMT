@@ -1,5 +1,5 @@
 import { formatBusinessDate } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
+import { requireBusinessSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,18 +8,19 @@ import { Badge } from "@/components/ui/badge";
 
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
-  const business = await getBusiness();
+  const { business, businessId } = await requireBusinessSession();
 
   const customers = await prisma.customer.findMany({
     where: q
       ? {
+          businessId,
           OR: [
             { name: { contains: q, mode: "insensitive" } },
             { email: { contains: q, mode: "insensitive" } },
             { phone: { contains: q, mode: "insensitive" } },
           ],
         }
-      : undefined,
+      : { businessId },
     orderBy: { createdAt: "desc" },
     include: {
       bookings: {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAvailableSlots, formatBusinessTime, staffCanPerformService } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
+import { getAvailableSlots, formatBusinessTime } from "@/lib/availability";
+import { getBusinessBySlug } from "@/lib/business";
 import { prisma } from "@/lib/db";
 import { availabilityQuerySchema } from "@/lib/validations";
 
@@ -10,22 +10,32 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Consulta inválida" }, { status: 400 });
   }
-  const { serviceId, staffId, date } = parsed.data;
+  const { slug, serviceId, staffId, date } = parsed.data;
 
-  const business = await getBusiness();
-  const service = await prisma.service.findUnique({ where: { id: serviceId } });
-  if (!service || !service.active) {
+  const business = await getBusinessBySlug(slug);
+  if (!business) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+
+  // Scoped by businessId: a service id belonging to another business must
+  // not resolve here.
+  const service = await prisma.service.findFirst({
+    where: { id: serviceId, businessId: business.id, active: true },
+  });
+  if (!service) {
     return NextResponse.json({ error: "Servicio no encontrado" }, { status: 404 });
   }
 
   let staffIds: string[];
   if (staffId) {
-    const eligible = await staffCanPerformService(staffId, serviceId);
-    if (!eligible) return NextResponse.json({ error: "Esta persona no realiza este servicio" }, { status: 400 });
+    const link = await prisma.serviceStaff.findFirst({
+      where: { serviceId, staffId, staff: { businessId: business.id, active: true } },
+    });
+    if (!link) {
+      return NextResponse.json({ error: "Esta persona no realiza este servicio" }, { status: 400 });
+    }
     staffIds = [staffId];
   } else {
     const links = await prisma.serviceStaff.findMany({
-      where: { serviceId, staff: { active: true } },
+      where: { serviceId, staff: { businessId: business.id, active: true } },
       select: { staffId: true },
     });
     staffIds = links.map((l) => l.staffId);
@@ -43,8 +53,8 @@ export async function GET(request: NextRequest) {
     }))
   );
 
-  // Merge across staff (for "any available" bookings) and dedupe by start time,
-  // keeping track of which staff members are free for each slot.
+  // Merge across staff (for "cualquiera disponible") and dedupe by start
+  // time, tracking which staff members are free for each slot.
   const merged = new Map<string, { start: string; end: string; staffIds: string[] }>();
   for (const { staffId: sId, slots } of slotsByStaff) {
     for (const slot of slots) {

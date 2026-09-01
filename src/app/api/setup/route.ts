@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { provisionBusiness } from "@/lib/provision";
+import { ProvisionError, provisionBusiness } from "@/lib/provision";
 
 /**
- * Configuración inicial, en un solo paso y desde el navegador: crea el
- * negocio y el usuario administrador sin necesidad de tener Node.js
- * instalado. Protegido con SETUP_SECRET para que nadie más pueda reclamar
- * una instalación recién desplegada. Se desactiva solo en cuanto existe un
- * negocio, así que es seguro dejarlo publicado.
+ * Alta de un negocio nuevo, en un solo paso y desde el navegador: crea el
+ * negocio, su usuario administrador y datos de ejemplo del sector, sin
+ * necesidad de tener Node.js instalado.
+ *
+ * Este despliegue atiende a muchos negocios a la vez, así que el formulario
+ * se puede usar tantas veces como clientes tengas: cada llamada crea un
+ * negocio independiente con su propia URL (`/su-negocio`). Va protegido con
+ * SETUP_SECRET porque es precisamente lo que impide que un desconocido dé
+ * de alta negocios en tu instalación.
  *
  * Acepta POST (desde el formulario en /setup) y GET (con parámetros en la
  * URL, útil para automatizar).
@@ -66,27 +70,41 @@ async function handleSetup(input: {
     return page(400, "Contraseña muy corta", "La contraseña debe tener al menos 8 caracteres.");
   }
 
-  const result = await provisionBusiness(prisma, {
-    ownerEmail: email,
-    ownerPassword: input.password,
-    businessName: input.businessName ?? undefined,
-    industryKey: input.industryKey ?? undefined,
-  });
-
-  if (result.alreadyProvisioned) {
-    return page(
-      409,
-      "Ya está configurado",
-      `«${result.businessName}» ya tiene negocio y usuario administrador. Este enlace solo funciona una vez. Inicia sesión en <a href="/admin">/admin</a>.`
-    );
+  let result;
+  try {
+    result = await provisionBusiness(prisma, {
+      ownerEmail: email,
+      ownerPassword: input.password,
+      businessName: input.businessName ?? undefined,
+      industryKey: input.industryKey ?? undefined,
+    });
+  } catch (err) {
+    if (err instanceof ProvisionError) {
+      return page(409, "No pudimos crear el negocio", escapeHtml(err.message));
+    }
+    console.error("[setup] provisioning failed:", err);
+    return page(500, "Algo salió mal", "No pudimos crear el negocio. Revisa los registros del despliegue e inténtalo de nuevo.");
   }
 
+  const bookingUrl = `/${result.slug}`;
   return page(
     200,
     "¡Listo!",
-    `Creamos «${result.businessName}» con el usuario <b>${result.ownerEmail}</b>. Entra a <a href="/admin">/admin</a> con ese correo y la contraseña que acabas de elegir, y personaliza todo desde Configuración. Este enlace ya no volverá a funcionar.`,
+    `Creamos «${escapeHtml(result.businessName)}» con el usuario <b>${escapeHtml(result.ownerEmail)}</b>.
+     Su página de reservas es <a href="${bookingUrl}">${escapeHtml(bookingUrl)}</a> — ese es el enlace que le compartes al cliente.
+     Para administrarla, entra a <a href="/admin">/admin</a> con ese correo y la contraseña que acabas de elegir.
+     Puedes volver a <a href="/setup">/setup</a> cuando quieras para dar de alta otro negocio.`,
     true
   );
+}
+
+/** El nombre del negocio lo escribe quien usa el formulario: se escapa antes de incrustarlo. */
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function str(value: FormDataEntryValue | null) {

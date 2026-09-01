@@ -1,7 +1,6 @@
 import { subHours } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
 import { formatBusinessDate, formatBusinessTime } from "@/lib/availability";
-import { getBusiness } from "@/lib/business";
 import { prisma } from "@/lib/db";
 import { sendBookingCancelledEmail } from "@/lib/email";
 import { cancelBookingSchema } from "@/lib/validations";
@@ -16,14 +15,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const booking = await prisma.booking.findUnique({
     where: { manageToken: token },
-    include: { service: true, customer: true, staff: true },
+    include: { service: true, customer: true, staff: true, business: true },
   });
   if (!booking) return NextResponse.json({ error: "No encontramos la cita" }, { status: 404 });
   if (booking.status === "CANCELLED") {
     return NextResponse.json({ error: "Esta cita ya está cancelada." }, { status: 400 });
   }
 
-  const business = await getBusiness();
+  const business = booking.business;
   const now = new Date();
 
   if (booking.startsAt < now) {
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     staffName: booking.staff.name,
     dateLabel: formatBusinessDate(booking.startsAt, business.timezone),
     timeLabel: formatBusinessTime(booking.startsAt, business.timezone),
-    bookAgainUrl: `${appUrl}/book/${booking.serviceId}`,
+    bookAgainUrl: `${appUrl}/${business.slug}/book/${booking.serviceId}`,
   }).catch((err) => console.error("[email] cancellation failed:", err));
 
   return NextResponse.json({ status: updated.status });

@@ -5,30 +5,72 @@ import { prisma } from "@/lib/db";
 export type Business = BusinessModel;
 
 /**
- * This deployment always serves exactly one business (white-label model —
- * each client gets their own deployment + database). We still model it as
- * a row, not env vars or constants, so an owner can rebrand everything
- * from /admin/settings without touching code or redeploying.
+ * This deployment serves many businesses at once. Each one lives at its own
+ * URL (`/<slug>`) and owns its staff, services, customers and bookings.
  *
- * Returns null before the deployment has been set up (see /api/setup).
- * A brand-new deployment builds and serves fine with an empty database —
- * callers render a "not set up yet" state rather than crashing, which is
- * what makes deploy-then-configure possible.
+ * Every query in the app is scoped by business, and there are exactly two
+ * ways to establish which business you're in:
+ *
+ *   - Public pages resolve it from the URL slug — getBusinessBySlug().
+ *   - Admin pages resolve it from the signed-in session — see
+ *     requireBusinessSession() in lib/auth.ts.
+ *
+ * Nothing should ever load a business any other way; that's what keeps one
+ * tenant's data out of another's pages.
  */
-export const getBusinessOrNull = cache(async () => {
-  return prisma.business.findFirst({ orderBy: { createdAt: "asc" } });
+export const getBusinessBySlug = cache(async (slug: string) => {
+  return prisma.business.findUnique({ where: { slug } });
 });
 
-/**
- * For contexts that genuinely cannot proceed without a business (the admin
- * dashboard, booking APIs). Only reachable after setup has run.
- */
-export const getBusiness = cache(async (): Promise<Business> => {
-  const business = await getBusinessOrNull();
-  if (!business) {
-    throw new Error(
-      "No Business record found. Visit /api/setup to create the initial business profile."
-    );
-  }
-  return business;
+export const getBusinessById = cache(async (id: string) => {
+  return prisma.business.findUnique({ where: { id } });
 });
+
+/** Businesses shown in the public directory at `/`. */
+export const listBusinesses = cache(async () => {
+  return prisma.business.findMany({
+    where: { listed: true },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      primaryColor: true,
+      heroSubheadline: true,
+      _count: { select: { services: { where: { active: true } } } },
+    },
+  });
+});
+
+export const countBusinesses = cache(async () => prisma.business.count());
+
+/** Turns a business name into a URL-safe slug. */
+export function slugify(input: string) {
+  return (
+    input
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") || "negocio"
+  );
+}
+
+/**
+ * Slugs that would collide with the app's own top-level routes. A business
+ * can't claim one of these, or its booking page would be unreachable.
+ */
+export const RESERVED_SLUGS = new Set(["admin", "api", "setup", "manage", "_next", "favicon.ico"]);
+
+/** Finds a free slug, appending -2, -3, … if the base is taken or reserved. */
+export async function findAvailableSlug(base: string) {
+  const root = slugify(base);
+  for (let i = 1; i < 100; i++) {
+    const candidate = i === 1 ? root : `${root}-${i}`;
+    if (RESERVED_SLUGS.has(candidate)) continue;
+    const taken = await prisma.business.findUnique({ where: { slug: candidate }, select: { id: true } });
+    if (!taken) return candidate;
+  }
+  return `${root}-${Date.now()}`;
+}

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
+import { requireBusinessSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { WeeklyAvailabilityEditor } from "@/components/admin/WeeklyAvailabilityEditor";
@@ -8,12 +9,15 @@ import { TimeOffManager } from "@/components/admin/TimeOffManager";
 export default async function StaffAvailabilityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const staff = await prisma.staff.findUnique({ where: { id } });
+  const { businessId } = await requireBusinessSession();
+
+  // Scoped: a staff id from another business must not resolve.
+  const staff = await prisma.staff.findFirst({ where: { id, businessId } });
   if (!staff) notFound();
 
   const [availability, timeOffs] = await Promise.all([
     prisma.availability.findMany({ where: { staffId: id } }),
-    prisma.timeOff.findMany({ where: { staffId: id, date: { gte: new Date() } }, orderBy: { date: "asc" } }),
+    prisma.timeOff.findMany({ where: { businessId, staffId: id, date: { gte: new Date() } }, orderBy: { date: "asc" } }),
   ]);
 
   const schedule: Record<number, { startMinute: number; endMinute: number }[]> = {};

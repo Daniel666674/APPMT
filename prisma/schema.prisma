@@ -1,5 +1,7 @@
-// Appointment Scheduler — white-label booking platform
-// One Business row per deployment. Everything else belongs to that business.
+// Appointment Scheduler — multi-tenant booking platform.
+// One deployment serves many businesses; each one lives at /<slug> and owns
+// its own staff, services, customers and bookings. Every tenant-owned model
+// carries a businessId, and every query is scoped by it.
 
 generator client {
   provider = "prisma-client-js"
@@ -12,23 +14,23 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// Business — the single tenant of this deployment. Owns branding, contact
-// info and booking rules. Everything a buyer needs to "re-skin" the app
-// lives here and is editable from /admin/settings, not in code.
+// Business — one tenant. Owns branding, contact info and booking rules.
+// Everything needed to re-skin a client's booking page lives here and is
+// editable from /admin, not in code.
 // ---------------------------------------------------------------------------
 model Business {
   id String @id @default(cuid())
 
-  name  String
-  slug  String @unique
-  logoUrl String?
+  name       String
+  slug       String  @unique // the public URL: /<slug>
+  logoUrl    String?
   faviconUrl String?
 
   // Brand kit — drives CSS variables at runtime (see lib/theme.ts)
   primaryColor String @default("#4f46e5")
   accentColor  String @default("#0ea5e9")
   fontFamily   String @default("inter")
-  themeMode    String @default("light") // light | dark | auto
+  themeMode    String @default("light") // light | dark
 
   // Public booking page copy
   heroHeadline    String?
@@ -43,19 +45,32 @@ model Business {
   instagramUrl String?
   facebookUrl  String?
 
-  timezone String @default("America/New_York")
-  currency String @default("USD")
+  timezone String @default("America/Bogota")
+  currency String @default("COP")
 
   // Booking rules
   bookingSlotIntervalMinutes Int     @default(30)
   bookingBufferMinutes       Int     @default(0)
   minNoticeMinutes           Int     @default(120)
   maxAdvanceDays             Int     @default(60)
-  requirePhone                Boolean @default(true)
-  cancellationWindowHours     Int     @default(24)
+  requirePhone               Boolean @default(true)
+  cancellationWindowHours    Int     @default(24)
+
+  /// Hidden from the public directory at /. Useful for a real client who
+  /// shouldn't be listed alongside your sales demos.
+  listed Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  users     User[]
+  staff     Staff[]
+  services  Service[]
+  customers Customer[]
+  bookings  Booking[]
+  timeOffs  TimeOff[]
+
+  @@index([listed])
 }
 
 enum Role {
@@ -64,7 +79,10 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   email        String   @unique
   passwordHash String
   name         String
@@ -74,10 +92,15 @@ model User {
   updatedAt    DateTime @updatedAt
 
   staff Staff?
+
+  @@index([businessId])
 }
 
 model Staff {
-  id     String  @id @default(cuid())
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -98,11 +121,14 @@ model Staff {
   timeOffs       TimeOff[]
   bookings       Booking[]
 
-  @@index([active])
+  @@index([businessId, active])
 }
 
 model Service {
-  id              String   @id @default(cuid())
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   name            String
   description     String?
   durationMinutes Int
@@ -117,10 +143,11 @@ model Service {
   staff    ServiceStaff[]
   bookings Booking[]
 
-  @@index([active])
+  @@index([businessId, active])
 }
 
-// Which staff members can perform which services (many-to-many)
+// Which staff members can perform which services (many-to-many). Both sides
+// belong to the same business, so this needs no businessId of its own.
 model ServiceStaff {
   serviceId String
   staffId   String
@@ -132,6 +159,7 @@ model ServiceStaff {
 }
 
 // Recurring weekly working hours per staff member, in business-local time.
+// Scoped to a business transitively through Staff.
 model Availability {
   id          String @id @default(cuid())
   staffId     String
@@ -143,26 +171,32 @@ model Availability {
   @@index([staffId, dayOfWeek])
 }
 
-// One-off overrides: a staff member's day off, a business-wide holiday,
-// or shortened hours on a specific date.
+// One-off overrides: a staff member's day off, a business-wide holiday, or
+// shortened hours on a specific date.
 model TimeOff {
-  id          String    @id @default(cuid())
-  staffId     String? // null = applies business-wide (e.g. a holiday)
-  staff       Staff?    @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  date        DateTime  @db.Date
-  allDay      Boolean   @default(true)
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  staffId     String? // null = applies to the whole business (e.g. a holiday)
+  staff       Staff?   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  allDay      Boolean  @default(true)
   startMinute Int?
   endMinute   Int?
   reason      String?
 
   createdAt DateTime @default(now())
 
+  @@index([businessId, date])
   @@index([staffId, date])
-  @@index([date])
 }
 
 model Customer {
-  id    String  @id @default(cuid())
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   name  String
   email String
   phone String?
@@ -173,7 +207,9 @@ model Customer {
 
   bookings Booking[]
 
-  @@unique([email])
+  // The same person can be a customer of several businesses.
+  @@unique([businessId, email])
+  @@index([businessId])
 }
 
 enum BookingStatus {
@@ -185,12 +221,14 @@ enum BookingStatus {
 }
 
 model Booking {
-  id String @id @default(cuid())
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  serviceId String
-  service   Service @relation(fields: [serviceId], references: [id])
-  staffId   String
-  staff     Staff   @relation(fields: [staffId], references: [id])
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id])
+  staffId    String
+  staff      Staff    @relation(fields: [staffId], references: [id])
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
 
@@ -212,6 +250,7 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([businessId, startsAt])
   @@index([staffId, startsAt])
   @@index([startsAt])
   @@index([status])

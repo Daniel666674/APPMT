@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { getBusiness } from "@/lib/business";
+import { requireBusinessSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,9 +8,9 @@ import { GeneralForm } from "./GeneralForm";
 import { BrandingForm } from "./BrandingForm";
 
 export default async function SettingsPage() {
-  const business = await getBusiness();
+  const { business, businessId } = await requireBusinessSession();
   const holidays = await prisma.timeOff.findMany({
-    where: { staffId: null, date: { gte: new Date() } },
+    where: { businessId, staffId: null, date: { gte: new Date() } },
     orderBy: { date: "asc" },
   });
 
@@ -33,6 +33,8 @@ export default async function SettingsPage() {
               <GeneralForm
                 initial={{
                   name: business.name,
+                  slug: business.slug,
+                  listed: business.listed,
                   timezone: business.timezone,
                   currency: business.currency,
                   contactEmail: business.contactEmail ?? "",

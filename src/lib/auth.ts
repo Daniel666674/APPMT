@@ -2,6 +2,7 @@ import "server-only";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 
 export const SESSION_COOKIE = "appmt_session";
@@ -19,6 +20,7 @@ function getSecretKey() {
 
 export interface SessionPayload {
   userId: string;
+  businessId: string;
   email: string;
   name: string;
   role: "OWNER" | "STAFF";
@@ -45,12 +47,14 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     const { payload } = await jwtVerify(token, getSecretKey());
     if (
       typeof payload.userId === "string" &&
+      typeof payload.businessId === "string" &&
       typeof payload.email === "string" &&
       typeof payload.name === "string" &&
       (payload.role === "OWNER" || payload.role === "STAFF")
     ) {
       return {
         userId: payload.userId,
+        businessId: payload.businessId,
         email: payload.email,
         name: payload.name,
         role: payload.role,
@@ -92,4 +96,20 @@ export async function requireSession(): Promise<SessionPayload> {
   const session = await getSession();
   if (!session) redirect("/admin/login");
   return session;
+}
+
+/**
+ * The single entry point for admin data access: returns the session plus the
+ * business it belongs to. Every admin query scopes on the businessId it
+ * returns, which is what stops one client seeing another's appointments.
+ */
+export async function requireBusinessSession() {
+  const session = await requireSession();
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+  if (!business) {
+    // The business was deleted out from under a live session.
+    await clearSessionCookie();
+    redirect("/admin/login");
+  }
+  return { session, business, businessId: business.id };
 }

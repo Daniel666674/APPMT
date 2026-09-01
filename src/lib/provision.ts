@@ -2,13 +2,17 @@ import type { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays, setHours, setMinutes } from "date-fns";
 import { getIndustry } from "@/lib/industries";
+import { findAvailableSlug } from "@/lib/business";
+
+export class ProvisionError extends Error {}
 
 /**
- * Creates the initial Business + owner login, plus a starter set of
- * services, staff and working hours drawn from the chosen industry preset,
- * so a fresh deployment opens as a believable demo of that vertical rather
- * than a blank app. Safe to call more than once — if a Business already
- * exists, it's a no-op.
+ * Creates one new business: its profile, an owner login, and a starter set of
+ * services, staff and working hours drawn from the chosen industry preset, so
+ * it opens as a believable demo of that vertical rather than a blank page.
+ *
+ * Every record it writes carries the new businessId, so the tenant is
+ * self-contained from the moment it exists.
  *
  * Takes a PrismaClient as a parameter rather than importing the app's
  * singleton, so it works both inside Next.js (/api/setup) and from a plain
@@ -21,27 +25,25 @@ export async function provisionBusiness(
     ownerPassword: string;
     businessName?: string;
     industryKey?: string;
+    listed?: boolean;
   }
-): Promise<{ alreadyProvisioned: boolean; businessName: string; ownerEmail: string }> {
-  const existingBusiness = await prisma.business.findFirst();
-  if (existingBusiness) {
-    return { alreadyProvisioned: true, businessName: existingBusiness.name, ownerEmail: opts.ownerEmail };
+): Promise<{ businessName: string; slug: string; ownerEmail: string }> {
+  const existingUser = await prisma.user.findUnique({ where: { email: opts.ownerEmail } });
+  if (existingUser) {
+    throw new ProvisionError(
+      `Ya existe una cuenta con el correo ${opts.ownerEmail}. Usa otro correo para este negocio.`
+    );
   }
 
   const industry = getIndustry(opts.industryKey);
   const businessName = opts.businessName?.trim() || industry.defaultBusinessName;
-  const slug =
-    businessName
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "") || "negocio";
+  const slug = await findAvailableSlug(businessName);
 
   const business = await prisma.business.create({
     data: {
       name: businessName,
       slug,
+      listed: opts.listed ?? true,
       primaryColor: industry.primaryColor,
       accentColor: industry.accentColor,
       fontFamily: "inter",
@@ -57,9 +59,11 @@ export async function provisionBusiness(
     },
   });
 
+  const businessId = business.id;
+
   const staff = [];
   for (const [index, s] of industry.staff.entries()) {
-    staff.push(await prisma.staff.create({ data: { ...s, sortOrder: index, active: true } }));
+    staff.push(await prisma.staff.create({ data: { ...s, businessId, sortOrder: index, active: true } }));
   }
 
   const services = [];
@@ -67,6 +71,7 @@ export async function provisionBusiness(
     services.push(
       await prisma.service.create({
         data: {
+          businessId,
           name: s.name,
           description: s.description,
           durationMinutes: s.durationMinutes,
@@ -99,22 +104,24 @@ export async function provisionBusiness(
   }
 
   const passwordHash = await bcrypt.hash(opts.ownerPassword, 12);
-  await prisma.user.upsert({
-    where: { email: opts.ownerEmail },
-    update: {},
-    create: { email: opts.ownerEmail, passwordHash, name: "Propietario", role: "OWNER" },
+  await prisma.user.create({
+    data: { businessId, email: opts.ownerEmail, passwordHash, name: "Propietario", role: "OWNER" },
   });
 
   // One booking on the calendar so the dashboard isn't empty at first login.
-  const demoCustomer = await prisma.customer.upsert({
-    where: { email: "cliente.ejemplo@correo.com" },
-    update: {},
-    create: { name: "Cliente de ejemplo", email: "cliente.ejemplo@correo.com", phone: "(300) 123 4567" },
+  const demoCustomer = await prisma.customer.create({
+    data: {
+      businessId,
+      name: "Cliente de ejemplo",
+      email: `cliente.ejemplo+${slug}@correo.com`,
+      phone: "(300) 123 4567",
+    },
   });
 
   const demoBookingStart = setMinutes(setHours(addDays(new Date(), 1), 10), 0);
   await prisma.booking.create({
     data: {
+      businessId,
       serviceId: services[0]!.id,
       staffId: staff[0]!.id,
       customerId: demoCustomer.id,
@@ -124,5 +131,5 @@ export async function provisionBusiness(
     },
   });
 
-  return { alreadyProvisioned: false, businessName: business.name, ownerEmail: opts.ownerEmail };
+  return { businessName: business.name, slug: business.slug, ownerEmail: opts.ownerEmail };
 }

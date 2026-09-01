@@ -27,10 +27,12 @@ interface Slot {
 const ANY_STAFF = "__any__";
 
 export function BookingWizard({
+  slug,
   business,
   service,
   staffOptions,
 }: {
+  slug: string;
   business: { timezone: string; currency: string; minNoticeMinutes: number; maxAdvanceDays: number; requirePhone: boolean };
   service: { id: string; name: string; description: string | null; durationMinutes: number; price: number | null };
   staffOptions: StaffOption[];
@@ -52,7 +54,7 @@ export function BookingWizard({
   async function fetchSlots(forDate: string) {
     setLoadingSlots(true);
     setError(null);
-    const query = new URLSearchParams({ serviceId: service.id, date: forDate });
+    const query = new URLSearchParams({ slug, serviceId: service.id, date: forDate });
     if (staffId !== ANY_STAFF) query.set("staffId", staffId);
     try {
       const res = await fetch(`/api/public/availability?${query.toString()}`);
@@ -93,6 +95,7 @@ export function BookingWizard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          slug,
           serviceId: service.id,
           staffId: resolvedStaffId,
           startsAt: selectedSlot.start,
@@ -110,7 +113,7 @@ export function BookingWizard({
         if (date) fetchSlots(date);
         return;
       }
-      router.push(`/confirmation/${data.id}`);
+      router.push(`/${slug}/confirmation/${data.id}`);
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
     } finally {
