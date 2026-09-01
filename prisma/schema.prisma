@@ -27,12 +27,12 @@ model Business {
   faviconUrl String?
 
   // Brand kit — drives CSS variables at runtime (see lib/theme.ts)
-  primaryColor String @default("#4f46e5")
-  accentColor  String @default("#0ea5e9")
-  fontFamily   String @default("inter")
-  themeMode    String @default("light") // light | dark
+  primaryColor String  @default("#4f46e5")
+  accentColor  String  @default("#0ea5e9")
+  fontFamily   String  @default("inter")
+  themeMode    String  @default("light") // light | dark
   /// sharp | soft | round — drives the corner radius of every card and button.
-  cornerStyle  String @default("soft")
+  cornerStyle  String  @default("soft")
   /// Optional photo behind the hero on the booking page.
   heroImageUrl String?
 
@@ -42,16 +42,16 @@ model Business {
   aboutText       String?
 
   // Contact / footer
-  contactEmail String?
-  contactPhone String?
+  contactEmail   String?
+  contactPhone   String?
   /// Colombian businesses live on WhatsApp; this renders a floating button
   /// on the booking page. Digits only, with country code.
   whatsappNumber String?
-  address      String?
-  city         String?
-  website      String?
-  instagramUrl String?
-  facebookUrl  String?
+  address        String?
+  city           String?
+  website        String?
+  instagramUrl   String?
+  facebookUrl    String?
 
   timezone String @default("America/Bogota")
   /// Always COP. Kept as a column so the money formatter has one source of
@@ -70,6 +70,18 @@ model Business {
   /// shouldn't be listed alongside your sales demos.
   listed Boolean @default(true)
 
+  /// Which INDUSTRIES preset this agenda was built from. Kept so a demo that
+  /// got mangled on a sales call can be reset back to its sector defaults.
+  industryKey String?
+
+  /// Reseller-only notes about this agenda. Never rendered publicly.
+  internalNotes String?
+
+  /// How the demo is doing, as the reseller sees it: opens of the public
+  /// page, and when it was last looked at.
+  viewCount    Int       @default(0)
+  lastViewedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -79,6 +91,8 @@ model Business {
   customers Customer[]
   bookings  Booking[]
   timeOffs  TimeOff[]
+  shares    DemoShare[]
+  prospects Prospect[]
 
   @@index([listed])
 }
@@ -97,17 +111,17 @@ model User {
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  email        String   @unique
+  email        String @unique
   passwordHash String
   name         String
-  role         Role     @default(OWNER)
+  role         Role   @default(OWNER)
 
   /// Reseller-level access: can list, enter and edit EVERY business on this
   /// deployment, not just their own. Reserved for whoever runs the platform.
-  isPlatformAdmin Boolean @default(false)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isPlatformAdmin Boolean  @default(false)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   staff Staff?
 
@@ -273,4 +287,86 @@ model Booking {
   @@index([startsAt])
   @@index([status])
   @@index([customerId])
+}
+
+// ---------------------------------------------------------------------------
+// Reseller-side models. None of these are tenant data: they belong to whoever
+// runs the deployment, they are never reachable from a /<slug> page, and only
+// a platform admin reads or writes them.
+// ---------------------------------------------------------------------------
+
+enum ProspectStatus {
+  NUEVO
+  CONTACTADO
+  DEMO_ENVIADA
+  INTERESADO
+  NEGOCIACION
+  GANADO
+  PERDIDO
+}
+
+/// A lead I am selling an agenda to. Optionally pinned to the demo agenda
+/// built for them, which is what makes "which link did I send this person"
+/// answerable.
+model Prospect {
+  id String @id @default(cuid())
+
+  name    String
+  company String?
+  email   String?
+  phone   String?
+  city    String?
+  sector  String?
+
+  status ProspectStatus @default(NUEVO)
+  source String?
+  value  Decimal?       @db.Decimal(12, 2)
+  notes  String?
+
+  /// The demo agenda shaped for this lead. Null until one is assigned; the
+  /// agenda survives the lead being deleted.
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  lastContactedAt DateTime?
+  nextFollowUpAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shares DemoShare[]
+
+  @@index([status])
+  @@index([businessId])
+}
+
+/// One shareable link to a demo. Every link is its own token, so opening it
+/// tells me which lead looked and when — a bare /<slug> visit cannot.
+model DemoShare {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  prospectId String?
+  prospect   Prospect? @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+
+  token String  @unique @default(cuid())
+  label String?
+
+  openCount    Int       @default(0)
+  lastOpenedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+  @@index([prospectId])
+}
+
+/// Deployment-wide preferences for the reseller console. Key/value so a new
+/// setting never needs a migration.
+model PlatformSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

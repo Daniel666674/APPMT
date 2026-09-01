@@ -25,6 +25,14 @@ prove it against a real running server and a real database — no mocks.
   nothing when it fails, that a reset actually works, that it restores
   platform access only when nobody holds it, and that guessing the secret
   gets rate-limited. Needs `SETUP_SECRET` set to match the server.
+- `demo-builder.mjs` — the reseller console: the demo builder, the prospect
+  CRM and tracked demo links. Checks a business owner's login is refused by
+  every one of those actions (**including on their own agenda** — what stops
+  them is the platform gate, not tenant scoping), that saving writes the whole
+  agenda in one go, that a service with bookings is **deactivated and never
+  deleted**, that a taken or reserved slug is refused, and that /s/<token>
+  counts the open and forwards to the demo. It builds its own throwaway agenda
+  and deletes it afterwards, so it never disturbs the seeded demos.
 - `platform-admin.mjs` — the reseller privilege boundary. Platform access
   reaches every agenda, so this checks a client login cannot list, enter,
   create or delete another one — including with a **forged cookie** that
@@ -55,6 +63,7 @@ TEST_URL=http://localhost:3100 node tests/tenant-isolation.mjs
 TEST_URL=http://localhost:3100 node tests/tenant-isolation-actions.mjs
 TEST_URL=http://localhost:3100 node tests/platform-admin.mjs
 TEST_URL=http://localhost:3100 node tests/account.mjs
+TEST_URL=http://localhost:3100 node tests/demo-builder.mjs
 TEST_URL=http://localhost:3100 SETUP_SECRET=… node tests/recovery.mjs
 # against a separate EMPTY database:
 TEST_URL=http://localhost:3100 SETUP_SECRET=… node tests/first-run.mjs
