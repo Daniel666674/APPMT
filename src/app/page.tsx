@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { ArrowRight, Clock } from "lucide-react";
-import { getBusiness } from "@/lib/business";
+import { getBusinessOrNull } from "@/lib/business";
 import { prisma } from "@/lib/db";
 import { formatDuration, formatMoney } from "@/lib/utils";
 import { SiteHeader } from "@/components/booking/SiteHeader";
 import { SiteFooter } from "@/components/booking/SiteFooter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SetupNeeded } from "@/components/booking/SetupNeeded";
+
+// Rendered per request rather than prerendered at build time: a fresh
+// deployment builds against an empty database, so there is nothing to
+// bake in yet. This is what lets you deploy first and configure after.
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const business = await getBusiness();
+  const business = await getBusinessOrNull();
+  if (!business) return <SetupNeeded />;
+
   const services = await prisma.service.findMany({
     where: { active: true },
     orderBy: { sortOrder: "asc" },
