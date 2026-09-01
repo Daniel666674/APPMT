@@ -66,29 +66,36 @@ This is the repeatable process for selling/deploying this to a new business.
 2. Add environment variables in the Vercel project settings — see
    `.env.example` for the full list. At minimum: `DATABASE_URL`,
    `DIRECT_URL`, `SESSION_SECRET`, `NEXT_PUBLIC_APP_URL` (your Vercel URL or
-   custom domain), and `CRON_SECRET`.
+   custom domain), `CRON_SECRET`, and `SETUP_SECRET`.
 3. Deploy. The build runs `prisma generate && prisma migrate deploy`
    automatically (`package.json` → `build` script) — tables and the
    anti-double-booking constraint are created on every deploy with no
    manual migration step.
 
-### 3. Seed the first login
+### 3. Create the first login — no local machine needed
 
-The one thing that still has to run from your own machine once per client,
-because the app has no database rows at all until this runs (the schema
-exists after step 2, but no `Business`/`User` row yet). Point your local
-`.env` at the production `DATABASE_URL`/`DIRECT_URL` (or `vercel env pull`),
-then:
+The app has no `Business`/`User` row until this runs once. Rather than
+requiring Node.js on your machine, visit this URL in a browser (fill in your
+own values):
 
-```bash
-npm install
-SEED_OWNER_EMAIL="the-client@theirbusiness.com" SEED_OWNER_PASSWORD="a-strong-temp-password" npm run db:seed
+```
+https://your-app.vercel.app/api/setup?secret=YOUR_SETUP_SECRET&email=owner@theirbusiness.com&password=a-strong-temp-password&business=Their%20Business%20Name
 ```
 
-This creates a demo `Business` row (placeholder name/services/staff) and the
-client's first admin login. The client replaces the placeholder content with
-their real business from the dashboard in step 5 below — it's a starting
-template, not something you need to hand-edit with their real info first.
+- `secret` must match the `SETUP_SECRET` you set in step 2.
+- `email` / `password` become the client's first admin login.
+- `business` (optional) seeds the real business name; omitted, it falls
+  back to a placeholder you can rename later.
+
+This also creates a starter set of demo services/staff/hours so the
+dashboard isn't empty on first login — replace them with the real thing in
+step 5. The link **permanently disables itself** the moment it succeeds
+(visiting it again just returns "already set up"), so it's safe to leave
+deployed.
+
+Prefer a terminal? `npm run db:seed` (from a local checkout, with
+`DATABASE_URL`/`DIRECT_URL` pointed at production) does the same thing —
+see `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD` in `.env.example`.
 
 Tell the client to log in and change their password... there's no
 self-service password change yet (see **Known limitations** below) — for now,
