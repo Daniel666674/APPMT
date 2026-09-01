@@ -16,6 +16,10 @@ prove it against a real running server and a real database — no mocks.
   admin's password changes the login behind every agenda, so this checks the
   current password is genuinely required, the new one takes effect and the
   old one stops working, and that an email already in use is refused.
+- `first-run.mjs` — the very first agenda on an empty deployment. It must
+  create the superadmin account: making it a login-less demo would leave the
+  deployment with zero accounts and no way in. **Needs its own empty
+  database**, so run it against a scratch one, not the seeded one.
 - `recovery.mjs` — `/recuperar`, the one route that sets a password without
   knowing the old one. Checks the SETUP_SECRET gate reveals and changes
   nothing when it fails, that a reset actually works, that it restores
@@ -52,6 +56,8 @@ TEST_URL=http://localhost:3100 node tests/tenant-isolation-actions.mjs
 TEST_URL=http://localhost:3100 node tests/platform-admin.mjs
 TEST_URL=http://localhost:3100 node tests/account.mjs
 TEST_URL=http://localhost:3100 SETUP_SECRET=… node tests/recovery.mjs
+# against a separate EMPTY database:
+TEST_URL=http://localhost:3100 SETUP_SECRET=… node tests/first-run.mjs
 ```
 
 Both exit non-zero if anything fails. They clean up after themselves, so

@@ -122,8 +122,11 @@ and walks five steps — sector, business, brand, hours, access — with a live
 preview of the booking page beside the form. It ends with the shareable URL.
 
 The account created here is the **platform admin**: the one login that
-reaches every agenda on the deployment. After this you never need `/setup`
-again — create the rest from **/admin/negocios → Nueva agenda**, signed in.
+reaches every agenda on the deployment. On an empty deployment the creator
+requires it — an agenda with no login would leave nobody able to sign in —
+so the first run asks for *your* email and password rather than offering the
+demo option. After this you never need `/setup` again: create the rest from
+**/admin/negocios → Nueva agenda**, signed in.
 
 #### Demos vs. clients
 
@@ -255,7 +258,7 @@ to their name on the Staff page).
 
 Because one deployment now holds every client's data, "business A cannot see
 or touch business B" is the property that must never regress. `tests/` backs
-it with 126 assertions against a real build and a real database — cross-tenant
+it with 145 assertions against a real build and a real database — cross-tenant
 ids on every public API, cross-tenant slugs on every public page, every admin
 server action invoked for real with another business's ids, and every
 reseller-level route and action attempted from a client login and from a
@@ -267,6 +270,7 @@ node tests/tenant-isolation-actions.mjs  # admin server actions
 node tests/platform-admin.mjs            # reseller privilege boundary
 node tests/account.mjs                   # your own login and password
 node tests/recovery.mjs                  # the locked-out recovery route
+node tests/first-run.mjs                 # first agenda must create the superadmin (empty DB)
 ```
 
 See `tests/README.md` for the setup they need. Run them after any change to

@@ -24,6 +24,17 @@ export async function createAgenda(input: unknown): Promise<CreatedAgenda> {
   }
   const data = parsed.data;
 
+  // A deployment with no accounts has nobody who can sign in, and the
+  // recovery page would only send you back here — so the very first agenda
+  // has to bring the superadmin login with it. Enforced on the server, not
+  // just hidden in the form.
+  const isFirstRun = (await prisma.user.count()) === 0;
+  if (isFirstRun && data.createOwnerUser !== true) {
+    throw new ProvisionError(
+      "Esta es la primera agenda del despliegue, así que tiene que crear tu cuenta de administrador. Escribe tu correo y tu contraseña."
+    );
+  }
+
   const slug = slugify(data.slug);
   if (RESERVED_SLUGS.has(slug)) {
     throw new ProvisionError(`«${slug}» es una dirección reservada. Elige otra.`);

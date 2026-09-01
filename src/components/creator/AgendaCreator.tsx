@@ -47,9 +47,20 @@ interface Props {
   mode: "setup" | "admin";
   /** In admin mode, a demo needs no login of its own. */
   defaultCreateOwnerUser?: boolean;
+  /**
+   * No account exists on this deployment yet, so this agenda has to create
+   * the superadmin login — there is no "demo without a login" option until
+   * somebody can actually sign in.
+   */
+  isFirstRun?: boolean;
 }
 
-export function AgendaCreator({ industries, mode, defaultCreateOwnerUser = false }: Props) {
+export function AgendaCreator({
+  industries,
+  mode,
+  defaultCreateOwnerUser = false,
+  isFirstRun = false,
+}: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -85,7 +96,7 @@ export function AgendaCreator({ industries, mode, defaultCreateOwnerUser = false
   const [openTo, setOpenTo] = useState(18 * 60);
   const [staffNames, setStaffNames] = useState<string[]>([]);
 
-  const [createOwnerUser, setCreateOwnerUser] = useState(defaultCreateOwnerUser);
+  const [createOwnerUser, setCreateOwnerUser] = useState(isFirstRun || defaultCreateOwnerUser);
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
   const [listed, setListed] = useState(true);
@@ -169,7 +180,8 @@ export function AgendaCreator({ industries, mode, defaultCreateOwnerUser = false
     if (step === 3 && openTo <= openFrom) return "La hora de cierre debe ser posterior a la de apertura.";
     if (step === 4) {
       if (mode === "setup" && !secret.trim()) return "Escribe la clave de instalación.";
-      if (createOwnerUser && !ownerEmail.includes("@")) return "Escribe el correo del cliente.";
+      if (createOwnerUser && !ownerEmail.includes("@"))
+        return isFirstRun ? "Escribe tu correo." : "Escribe el correo del cliente.";
       if (createOwnerUser && ownerPassword.length < 8) return "La contraseña debe tener mínimo 8 caracteres.";
     }
     return null;
@@ -509,32 +521,58 @@ export function AgendaCreator({ industries, mode, defaultCreateOwnerUser = false
         ) : null}
 
         {step === 4 ? (
-          <Section title="Acceso y publicación" hint="Define si esta agenda es una demo tuya o la de un cliente.">
-            <div className="space-y-3">
-              <Toggle
-                checked={!createOwnerUser}
-                onChange={(v) => setCreateOwnerUser(!v)}
-                title="Es una demo mía"
-                description="No crea ningún usuario. La manejas desde tu misma cuenta, junto con todas las demás agendas — un solo correo y una sola contraseña para todo."
-              />
-              <Toggle
-                checked={createOwnerUser}
-                onChange={setCreateOwnerUser}
-                title="Es de un cliente"
-                description="Crea un acceso propio para que el cliente entre solo a su agenda y no vea ninguna otra."
-              />
-            </div>
+          <Section
+            title={isFirstRun ? "Tu cuenta de administrador" : "Acceso y publicación"}
+            hint={
+              isFirstRun
+                ? "Este es el único usuario del despliegue: el tuyo. Con él entras a esta agenda y a todas las que crees después."
+                : "Define si esta agenda es una demo tuya o la de un cliente."
+            }
+          >
+            {isFirstRun ? (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Tu correo" hint="Con este correo vas a entrar al panel.">
+                    <Input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} autoFocus />
+                  </Field>
+                  <Field label="Tu contraseña" hint="Mínimo 8 caracteres. Anótala.">
+                    <Input type="text" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} />
+                  </Field>
+                </div>
+                <p className="rounded-md border border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+                  Las agendas que crees después no necesitan usuario: tus clientes potenciales solo abren
+                  el enlace de la demo, sin registrarse ni entrar a nada.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  <Toggle
+                    checked={!createOwnerUser}
+                    onChange={(v) => setCreateOwnerUser(!v)}
+                    title="Es una demo mía"
+                    description="No crea ningún usuario. Quien la vea solo abre el enlace. La manejas desde tu misma cuenta, junto con todas las demás."
+                  />
+                  <Toggle
+                    checked={createOwnerUser}
+                    onChange={setCreateOwnerUser}
+                    title="Es de un cliente que compró"
+                    description="Crea un acceso propio para que el cliente entre solo a su agenda y no vea ninguna otra."
+                  />
+                </div>
 
-            {createOwnerUser ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Correo del cliente">
-                  <Input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} />
-                </Field>
-                <Field label="Contraseña" hint="Mínimo 8 caracteres.">
-                  <Input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} />
-                </Field>
-              </div>
-            ) : null}
+                {createOwnerUser ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Correo del cliente">
+                      <Input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} />
+                    </Field>
+                    <Field label="Contraseña" hint="Mínimo 8 caracteres.">
+                      <Input type="text" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
+              </>
+            )}
 
             <Toggle
               checked={listed}
