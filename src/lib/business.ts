@@ -69,6 +69,7 @@ export const RESERVED_SLUGS = new Set([
   "setup",
   "recuperar",
   "manage",
+  "s",
   "_next",
   "favicon.ico",
 ]);

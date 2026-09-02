@@ -86,6 +86,8 @@ export async function provisionBusiness(
       name: businessName,
       slug,
       listed: opts.listed ?? true,
+      // Remembered so the demo can be reset back to its sector defaults later.
+      industryKey: industry.key,
       primaryColor: opts.primaryColor || industry.primaryColor,
       accentColor: opts.accentColor || industry.accentColor,
       fontFamily: opts.fontFamily || "inter",
