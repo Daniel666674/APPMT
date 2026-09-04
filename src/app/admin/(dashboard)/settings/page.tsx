@@ -66,6 +66,7 @@ export default async function SettingsPage() {
             </TabsContent>
             <TabsContent value="branding">
               <BrandingForm
+                businessId={businessId}
                 initial={{
                   logoUrl: business.logoUrl ?? "",
                   faviconUrl: business.faviconUrl ?? "",

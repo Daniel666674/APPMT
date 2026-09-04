@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { BookingPreview } from "./BookingPreview";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 
 const DAYS = [
   { value: 1, short: "L", label: "Lunes" },
@@ -479,12 +480,19 @@ export function AgendaCreator({ industries, mode, defaultCreateOwnerUser = false
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Logo (enlace de imagen)" hint="Opcional. Si no hay, mostramos el nombre.">
-                <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://…" />
-              </Field>
-              <Field label="Foto de portada" hint="Opcional. Se ve detrás del titular.">
-                <Input value={heroImageUrl} onChange={(e) => setHeroImageUrl(e.target.value)} placeholder="https://…" />
-              </Field>
+              <ImageUploadField
+                label="Logo"
+                hint="Opcional. Si no hay, mostramos el nombre."
+                value={logoUrl}
+                onChange={setLogoUrl}
+              />
+              <ImageUploadField
+                label="Foto de portada"
+                hint="Opcional. Se ve detrás del titular."
+                value={heroImageUrl}
+                onChange={setHeroImageUrl}
+                aspect="wide"
+              />
             </div>
 
             <Field label="Titular de la página" hint="Déjalo vacío y usamos el del sector.">

@@ -3,6 +3,7 @@ import { AlertTriangle, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getPlatformSettings } from "@/lib/platform-settings";
+import { uploadsConfigured } from "@/lib/blob";
 import { formatMoney } from "@/lib/utils";
 import { PlatformForm } from "./PlatformForm";
 
@@ -49,8 +50,10 @@ export default async function PlataformaPage() {
     },
     {
       label: "Subida de archivos",
-      ok: false,
-      detail: "Logos, favicons e imágenes de portada todavía se pegan como URL.",
+      ok: uploadsConfigured(),
+      detail: uploadsConfigured()
+        ? "Logos, favicons e imágenes de portada se suben directo desde el computador (Vercel Blob)."
+        : "Falta conectar un almacén de Vercel Blob y su BLOB_READ_WRITE_TOKEN. Hasta entonces no se pueden subir imágenes.",
     },
     {
       label: "WhatsApp transaccional",

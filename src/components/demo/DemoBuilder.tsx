@@ -11,7 +11,6 @@ import {
   Eye,
   ExternalLink,
   GripVertical,
-  Image as ImageIcon,
   Link2,
   Monitor,
   Palette,
@@ -40,6 +39,7 @@ import { BRAND_PRESETS, CORNER_OPTIONS, FONT_OPTIONS } from "@/lib/theme";
 import { cn, formatMoney, minutesToTimeLabel, WEEKDAY_LABELS } from "@/lib/utils";
 import type { DemoBuilderInput } from "@/lib/validations";
 import { DemoPreview } from "@/components/demo/DemoPreview";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import {
   clearBookingsAction,
   createShareAction,
@@ -236,6 +236,7 @@ export function DemoBuilder({
                 set={set}
                 setForm={setForm}
                 mixedSchedules={meta.mixedSchedules}
+                businessId={businessId}
               />
             </div>
 
@@ -394,12 +395,14 @@ function SectionEditor({
   set,
   setForm,
   mixedSchedules,
+  businessId,
 }: {
   section: SectionKey;
   form: Form;
   set: <K extends keyof Form>(key: K, value: Form[K]) => void;
   setForm: React.Dispatch<React.SetStateAction<Form>>;
   mixedSchedules: boolean;
+  businessId: string;
 }) {
   switch (section) {
     case "marca":
@@ -497,8 +500,19 @@ function SectionEditor({
           />
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <ImageField label="Logo" value={form.logoUrl ?? ""} onChange={(v) => set("logoUrl", v)} />
-            <ImageField label="Favicon" value={form.faviconUrl ?? ""} onChange={(v) => set("faviconUrl", v)} />
+            <ImageUploadField
+              label="Logo"
+              value={form.logoUrl ?? ""}
+              onChange={(v) => set("logoUrl", v)}
+              businessId={businessId}
+            />
+            <ImageUploadField
+              label="Favicon"
+              value={form.faviconUrl ?? ""}
+              onChange={(v) => set("faviconUrl", v)}
+              businessId={businessId}
+              accept="image/png,image/x-icon,image/svg+xml"
+            />
           </div>
         </div>
       );
@@ -507,10 +521,12 @@ function SectionEditor({
       return (
         <div className="space-y-5">
           <Heading title="Portada y textos" hint="El titular es lo que el lead lee primero. Que hable de su negocio." />
-          <ImageField
+          <ImageUploadField
             label="Imagen de portada"
             value={form.heroImageUrl ?? ""}
             onChange={(v) => set("heroImageUrl", v)}
+            businessId={businessId}
+            aspect="wide"
           />
           <Field label="Titular">
             <Input
@@ -1104,36 +1120,7 @@ function ColorField({
   );
 }
 
-/**
- * Images are still pasted URLs — real uploads are the next piece of work.
- * The field shows a thumbnail so a wrong or dead link is obvious before the
- * lead ever sees the page.
- */
-function ImageField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <Field label={label} hint="Pega la URL de la imagen.">
-      <div className="flex items-center gap-2">
-        <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md border border-border">
-          {value ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={value} alt="" className="h-full w-full object-contain" />
-          ) : (
-            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-          )}
-        </span>
-        <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://…" />
-      </div>
-    </Field>
-  );
-}
+
 
 function ToggleRow({
   label,
