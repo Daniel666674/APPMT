@@ -33,6 +33,11 @@ prove it against a real running server and a real database — no mocks.
   deleted**, that a taken or reserved slug is refused, and that /s/<token>
   counts the open and forwards to the demo. It builds its own throwaway agenda
   and deletes it afterwards, so it never disturbs the seeded demos.
+- `uploads.mjs` — POST /api/admin/upload, the file-upload endpoint behind
+  every logo/favicon/hero-photo field. Proves the same tenant boundary as
+  everywhere else (a business owner only into their own agenda, a platform
+  admin into any agenda or a draft) without needing a configured Vercel Blob
+  store — every rejected case never reaches Blob.
 - `platform-admin.mjs` — the reseller privilege boundary. Platform access
   reaches every agenda, so this checks a client login cannot list, enter,
   create or delete another one — including with a **forged cookie** that
@@ -64,6 +69,7 @@ TEST_URL=http://localhost:3100 node tests/tenant-isolation-actions.mjs
 TEST_URL=http://localhost:3100 node tests/platform-admin.mjs
 TEST_URL=http://localhost:3100 node tests/account.mjs
 TEST_URL=http://localhost:3100 node tests/demo-builder.mjs
+TEST_URL=http://localhost:3100 node tests/uploads.mjs
 TEST_URL=http://localhost:3100 SETUP_SECRET=… node tests/recovery.mjs
 # against a separate EMPTY database:
 TEST_URL=http://localhost:3100 SETUP_SECRET=… node tests/first-run.mjs

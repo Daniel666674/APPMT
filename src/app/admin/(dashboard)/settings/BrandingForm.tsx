@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { BRAND_PRESETS, CORNER_OPTIONS, FONT_OPTIONS } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { BookingPreview } from "@/components/creator/BookingPreview";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
 import { updateBranding } from "./actions";
 
 interface Props {
@@ -33,7 +34,15 @@ interface Context {
   services: { name: string; description: string; durationMinutes: number; price: number }[];
 }
 
-export function BrandingForm({ initial, context }: { initial: Props; context: Context }) {
+export function BrandingForm({
+  initial,
+  context,
+  businessId,
+}: {
+  initial: Props;
+  context: Context;
+  businessId: string;
+}) {
   const router = useRouter();
   const [values, setValues] = useState(initial);
   const [saving, setSaving] = useState(false);
@@ -156,28 +165,29 @@ export function BrandingForm({ initial, context }: { initial: Props; context: Co
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="logoUrl">Logo (enlace de imagen)</Label>
-            <Input id="logoUrl" value={values.logoUrl} onChange={(e) => set("logoUrl", e.target.value)} placeholder="https://…" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="faviconUrl">Ícono del navegador</Label>
-            <Input id="faviconUrl" value={values.faviconUrl} onChange={(e) => set("faviconUrl", e.target.value)} placeholder="https://…" />
-          </div>
+          <ImageUploadField
+            label="Logo"
+            value={values.logoUrl}
+            onChange={(v) => set("logoUrl", v)}
+            businessId={businessId}
+          />
+          <ImageUploadField
+            label="Ícono del navegador"
+            value={values.faviconUrl}
+            onChange={(v) => set("faviconUrl", v)}
+            businessId={businessId}
+            accept="image/png,image/x-icon,image/svg+xml"
+          />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="heroImageUrl">Foto de portada</Label>
-          <Input
-            id="heroImageUrl"
-            value={values.heroImageUrl}
-            onChange={(e) => set("heroImageUrl", e.target.value)}
-            placeholder="https://…"
-          />
-          <p className="text-xs text-muted-foreground">
-            Se ve detrás del titular, con el texto en blanco encima. Déjalo vacío para un fondo liso.
-          </p>
-        </div>
+        <ImageUploadField
+          label="Foto de portada"
+          value={values.heroImageUrl}
+          onChange={(v) => set("heroImageUrl", v)}
+          businessId={businessId}
+          aspect="wide"
+          hint="Se ve detrás del titular, con el texto en blanco encima. Déjala vacía para un fondo liso."
+        />
 
         <Button type="submit" variant="brand" disabled={saving}>
           {saving ? "Guardando…" : "Guardar marca"}
