@@ -126,3 +126,109 @@ body {
 .animate-content[data-state="closed"] { animation: content-out 120ms ease-in; }
 .animate-pop[data-state="open"] { animation: pop-in 120ms ease-out; }
 .animate-pop[data-state="closed"] { animation: pop-out 100ms ease-in; }
+
+/* ---------------------------------------------------------------------------
+   The reseller console — /admin.
+   Everything below `.console` is MY tool, not a client's page: it is deliberately
+   the one surface in this deployment with a fixed identity (BlackScale: dark
+   ground, burgundy, gold, serif headings) instead of a per-business brand kit.
+   The tokens are redefined rather than hardcoded so every existing component —
+   Button, Card, Input, Table — inherits the console look with no changes, and
+   so a business's own brand kit stays confined to /<slug>.
+
+   Radix dialogs, dropdowns and popovers render in a portal on <body>, outside
+   the console subtree, so the tokens are also attached to body[data-console]
+   — AdminShell sets that attribute while the console is mounted.
+--------------------------------------------------------------------------- */
+.console,
+body[data-console="1"] {
+  --radius: 0.6rem;
+
+  --console-gold: #d4af37;
+  --console-gold-soft: rgba(212, 175, 55, 0.12);
+  --console-burgundy: #7a1f2b;
+  --console-burgundy-soft: rgba(122, 31, 43, 0.18);
+  --console-sidebar: #0b0b0c;
+  --console-surface: #131315;
+  --console-surface-2: #191a1d;
+  --console-serif: var(--font-playfair), ui-serif, Georgia, serif;
+
+  --background: #0f0f10;
+  --foreground: #f2f0ea;
+  --card: var(--console-surface);
+  --card-foreground: #f2f0ea;
+  --popover: var(--console-surface-2);
+  --popover-foreground: #f2f0ea;
+  --secondary: #1e1f22;
+  --secondary-foreground: #f2f0ea;
+  --muted: #1a1b1e;
+  --muted-foreground: #9a978f;
+  --border: #2a2b2f;
+  --input: #34353a;
+  --ring: var(--console-gold);
+  --destructive: #b3454f;
+  --destructive-foreground: #ffffff;
+  --success: #4a9b6e;
+  --success-foreground: #0f0f10;
+
+  --brand-primary: var(--console-gold);
+  --brand-primary-hover: #c19c2c;
+  --brand-primary-foreground: #17150e;
+  --brand-primary-soft: var(--console-gold-soft);
+  --brand-accent: var(--console-burgundy);
+  --brand-accent-soft: var(--console-burgundy-soft);
+  --brand-accent-foreground: #f7f2ea;
+  --brand-font: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  color-scheme: dark;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Serif headings are the console's signature. Scoped to headings so form
+   labels, tables and numbers stay in the sans stack and remain legible. */
+.console h1,
+.console h2,
+.console .console-serif {
+  font-family: var(--console-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* A live preview inside the console renders a CLIENT's booking page, so it
+   must not inherit any of the above. `.console-escape` resets the surface
+   tokens back to the neutral defaults; the preview then layers the business's
+   own brand kit on top, exactly as /<slug> does. */
+.console-escape {
+  --background: #ffffff;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #a1a1aa;
+  color-scheme: light;
+}
+.console-escape.dark,
+.console-escape .dark {
+  --background: #0c0a09;
+  --foreground: #f4f4f5;
+  --card: #18181b;
+  --card-foreground: #f4f4f5;
+  --popover: #18181b;
+  --popover-foreground: #f4f4f5;
+  --secondary: #27272a;
+  --secondary-foreground: #f4f4f5;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --input: #3f3f46;
+  --ring: #52525b;
+  color-scheme: dark;
+}

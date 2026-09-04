@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Copy, ExternalLink, LogIn, MoreVertical, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Copy, ExternalLink, LogIn, MoreVertical, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,10 +79,17 @@ export function AgendaRow({ business, isActive }: { business: AgendaRowData; isA
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </Button>
+        <Button asChild variant="brand" size="sm">
+          {/* The one screen that shapes this whole agenda — brand, servicios,
+              equipo, horarios — with a live preview. */}
+          <Link href={`/admin/negocios/${business.id}/editar`}>
+            <Wand2 className="mr-1 h-3.5 w-3.5" /> Editar demo
+          </Link>
+        </Button>
         {isActive ? null : (
           <Button
             type="button"
-            variant="brand"
+            variant="outline"
             size="sm"
             disabled={pending}
             onClick={() => startTransition(() => void switchBusiness(business.id))}

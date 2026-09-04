@@ -22,6 +22,17 @@ export default async function BusinessHomePage({ params }: { params: Promise<{ s
     orderBy: { sortOrder: "asc" },
   });
 
+  // Demo telemetry for the reseller console: how often this page gets opened
+  // and when it was last looked at. Fire-and-forget and deliberately crude —
+  // it counts page loads, not people — because a counter that fails must
+  // never take the booking page down with it.
+  void prisma.business
+    .update({
+      where: { id: business.id },
+      data: { viewCount: { increment: 1 }, lastViewedAt: new Date() },
+    })
+    .catch(() => {});
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader business={business} />
